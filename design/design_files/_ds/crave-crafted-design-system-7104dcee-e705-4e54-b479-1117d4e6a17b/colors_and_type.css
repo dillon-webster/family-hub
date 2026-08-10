@@ -1,0 +1,243 @@
+/* ============================================================
+   CRAVE CRAFTED — Design System Foundations
+   colors_and_type.css
+   Warm, editorial recipe-keeper. One file: fonts, color, type.
+   ============================================================ */
+
+/* ---- Fonts (Google Fonts) -----------------------------------
+   Display / editorial:  Newsreader  (warm serif, lovely italics)
+   UI & body:            Hanken Grotesk (friendly humanist sans)
+   Numerics / quantities: DM Mono (timers, measurements, amounts)
+   These ARE the brand fonts — loaded from Google Fonts CDN.
+   ------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ===========================================================
+     COLOR — Warm neutrals (the "paper" the brand is printed on)
+     =========================================================== */
+  --paper:        #FCF7EF; /* app background — warm cream */
+  --paper-2:      #F6EDDE; /* raised warm surface, headers */
+  --paper-3:      #EFE3D0; /* sunken wells, inputs, tracks */
+  --card:         #FFFDF9; /* card surface on cream */
+  --card-contrast:#FFFFFF; /* crisp white for media/photos */
+
+  --ink:          #2B2521; /* primary text — warm near-black */
+  --ink-2:        #6F6357; /* secondary text — warm taupe */
+  --ink-3:        #9C8E7E; /* tertiary / placeholder / muted */
+  --ink-inverse:  #FCF7EF; /* text on dark / on brand fills */
+
+  --line:         #E9DDCA; /* hairline borders on cream */
+  --line-2:       #DBCBB1; /* stronger borders, dividers */
+
+  /* ===========================================================
+     COLOR — Brand PRIMARY (customizable accent #1)
+     Default preset: "Paprika" terracotta. This is the hue the
+     user can re-theme to personalize the app. Always reference
+     --primary, never the raw hex, in product UI.
+     =========================================================== */
+  --primary:        #C8553D; /* terracotta */
+  --primary-hover:  #B8492F; /* hover — slightly deeper */
+  --primary-press:  #A23F29; /* pressed — deeper still */
+  --primary-soft:   #F7E4D9; /* tint background / chips */
+  --primary-softer: #FBF0E9; /* faint wash, selected rows */
+  --on-primary:     #FFF8F2; /* text/icons on primary fill */
+
+  /* ===========================================================
+     COLOR — Brand SECONDARY (customizable accent #2)
+     Default preset: "Basil" herb green. Used for tags, fresh
+     states, secondary emphasis. Also user-swappable.
+     =========================================================== */
+  --accent:        #6E8B57; /* sage / herb green */
+  --accent-hover:  #5F7B4A;
+  --accent-soft:   #E5EAD9; /* tint background / chips */
+  --on-accent:     #FBFCF7;
+
+  /* ===========================================================
+     COLOR — Semantic (cooking-warm, not generic)
+     =========================================================== */
+  --success:      #3F7D4F; /* "fresh" green */
+  --success-soft: #E0EBDF;
+  --warning:      #D9962B; /* honey / amber */
+  --warning-soft: #F8ECD4;
+  --danger:       #BE3A2E; /* deep tomato red */
+  --danger-soft:  #F7DED9;
+  --info:         #4F7CA0; /* muted slate-blue, used sparingly */
+  --info-soft:    #E0E9EF;
+
+  /* star / rating accent (sits well beside terracotta) */
+  --gold:         #E0A23C;
+
+  /* ===========================================================
+     ELEVATION — warm-tinted shadows (never neutral gray)
+     Shadows carry a brown cast so they feel like paper, not glass.
+     =========================================================== */
+  --shadow-xs: 0 1px 2px rgba(67, 47, 28, 0.06);
+  --shadow-sm: 0 1px 3px rgba(67, 47, 28, 0.08), 0 1px 2px rgba(67, 47, 28, 0.06);
+  --shadow-md: 0 4px 12px rgba(67, 47, 28, 0.10), 0 2px 4px rgba(67, 47, 28, 0.06);
+  --shadow-lg: 0 12px 28px rgba(67, 47, 28, 0.14), 0 4px 10px rgba(67, 47, 28, 0.08);
+  --shadow-xl: 0 24px 48px rgba(67, 47, 28, 0.18), 0 8px 16px rgba(67, 47, 28, 0.10);
+  /* pressed / inset for wells */
+  --shadow-inset: inset 0 1px 2px rgba(67, 47, 28, 0.10);
+
+  /* ===========================================================
+     RADIUS — soft, rounded, friendly (cookbook softness)
+     =========================================================== */
+  --r-xs:  6px;   /* chips, small tags */
+  --r-sm:  10px;  /* buttons, inputs */
+  --r-md:  14px;  /* small cards, menus */
+  --r-lg:  20px;  /* recipe cards, sheets */
+  --r-xl:  28px;  /* hero panels, modals */
+  --r-pill: 999px;/* fully round pills, avatars, FAB */
+
+  /* ===========================================================
+     SPACING — 4px base scale
+     =========================================================== */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 48px;
+  --s-10: 64px;
+  --s-11: 80px;
+
+  /* ===========================================================
+     TYPE — families
+     =========================================================== */
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* TYPE — base tokens */
+  --fw-regular: 400; /* @kind font */
+  --fw-medium: 500; /* @kind font */
+  --fw-semibold: 600; /* @kind font */
+  --fw-bold: 700; /* @kind font */
+  --fw-extrabold: 800; /* @kind font */
+
+  --lh-tight: 1.08; /* @kind font */
+  --lh-snug: 1.25; /* @kind font */
+  --lh-normal: 1.5; /* @kind font */
+  --lh-relaxed: 1.65; /* @kind font */
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-caps: 0.10em;
+}
+
+/* ============================================================
+   SEMANTIC TYPE CLASSES
+   Display & editorial headings use the serif (Newsreader).
+   Recipe titles are serif. UI text & body use the sans.
+   ============================================================ */
+
+.display {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: 56px;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink);
+}
+
+.h1 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: 40px;
+  line-height: 1.12;
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink);
+}
+
+.h2 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-medium);
+  font-size: 30px;
+  line-height: 1.18;
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink);
+}
+
+.h3 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-medium);
+  font-size: 23px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+/* Recipe / card title — serif, the editorial signature of Crave Crafted */
+.recipe-title {
+  font-family: var(--font-display);
+  font-weight: var(--fw-medium);
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* UI section label — sans, uppercase, tracked */
+.overline {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.lead {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-regular);
+  font-size: 19px;
+  line-height: var(--lh-relaxed);
+  color: var(--ink-2);
+}
+
+.body {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-regular);
+  font-size: 16px;
+  line-height: var(--lh-normal);
+  color: var(--ink);
+}
+
+.body-strong {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size: 16px;
+  line-height: var(--lh-normal);
+  color: var(--ink);
+}
+
+.small {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-regular);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.caption {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-medium);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+
+/* Quantities, timers, measurements — mono, tabular */
+.numeric {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-regular);
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}

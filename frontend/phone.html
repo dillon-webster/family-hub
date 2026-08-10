@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover so the phone's safe-area insets are real values;
+         user-scalable=no keeps the sheet layout from being pinched out of shape. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#FCF7EF" />
+    <meta name="description" content="The shopping list, recipe capture and the week planner." />
+
+    <!-- A second entry point rather than one page rewriting its own manifest.
+         Add to Home Screen pins the manifest's start_url, and iOS reads that
+         manifest once, at load — swapping the <link> from JavaScript afterwards
+         pinned the kitchen display anyway. Baking it into the HTML is the only
+         version Safari reliably honours. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Hub phone" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="manifest" href="/manifest-phone.webmanifest" />
+    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+
+    <title>Family Hub</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

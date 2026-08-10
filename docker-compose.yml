@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-familyhub}
+      POSTGRES_DB: family_hub
+    volumes:
+      # A named volume, not a bind mount: this is database internals, not
+      # something to poke at from the host filesystem.
+      - db-data:/var/lib/postgresql/data
+    ports:
+      # Loopback only, so `cargo run` on this machine can share the database
+      # the container uses. Nothing outside the host can reach it.
+      - "127.0.0.1:${DB_PORT:-5435}:5432"
+    healthcheck:
+      # The hub runs migrations the moment it starts, so it must not start
+      # until Postgres is actually accepting connections.
+      test: ["CMD-SHELL", "pg_isready -U postgres -d family_hub"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-familyhub}@db:5432/family_hub
+      # Who lives here. Only read the first time the hub runs, when the members
+      # table is empty — renaming someone later is an API call, not a restart.
+      FAMILY_HUB_MEMBERS: ${FAMILY_HUB_MEMBERS:-Maya:#C8553D,Dan:#4F7CA0}
+      # Optional. Without it the scan route says so up front rather than
+      # failing at the moment someone points the camera at a cookbook.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-5}
+      ICS_SYNC_INTERVAL_SECS: ${ICS_SYNC_INTERVAL_SECS:-900}
+      TZ: ${TZ:-UTC}
+      RUST_LOG: ${RUST_LOG:-family_hub_server=info}
+    ports:
+      # Bound to the Tailscale interface only, so the hub is unreachable from
+      # the LAN or the public internet even if the firewall is misconfigured.
+      # Set BIND_IP in .env to this machine's Tailscale address (`tailscale ip -4`).
+      # Defaults to loopback: without a .env the hub is reachable only from the
+      # host itself rather than being accidentally exposed.
+      - "${BIND_IP:-127.0.0.1}:${APP_PORT:-3008}:3000"
+
+volumes:
+  db-data:

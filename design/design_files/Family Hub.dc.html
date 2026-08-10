@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/crave-crafted-design-system-7104dcee-e705-4e54-b479-1117d4e6a17b/colors_and_type.css">
+<script src="_ds/crave-crafted-design-system-7104dcee-e705-4e54-b479-1117d4e6a17b/_ds_bundle.js"></script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Family Hub">
+<meta name="theme-color" content="#1E1A17">
+<style>
+  html, body { margin:0; padding:0; background:#14110F; overscroll-behavior:none; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select:none; user-select:none; touch-action:manipulation; }
+  a { color:#E37A57; text-decoration:none; }
+  a:hover { color:#F09069; }
+  @keyframes hubscan { 0% { top: 8%; } 50% { top: 90%; } 100% { top: 8%; } }
+  @keyframes hubpulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+</style>
+</helmet>
+
+<div style="width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:#14110F;overflow:hidden">
+<div style="width:1180px;height:820px;flex:0 0 auto;transform:scale({{ fitScale }});transform-origin:center center;display:flex;background:#1E1A17;font-family:'Hanken Grotesk',sans-serif;color:#FAF3E9;overflow:hidden;position:relative">
+
+  <div style="width:104px;flex:0 0 104px;background:#171412;border-right:1px solid rgba(252,247,239,0.08);display:flex;flex-direction:column;align-items:center;padding:18px 0 20px;gap:6px;padding-bottom:max(20px,env(safe-area-inset-bottom))">
+    <div style="width:44px;height:44px;border-radius:12px;background:#C8553D;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFF8F2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18a8 8 0 0 1-8 8h-2a8 8 0 0 1-8-8Z"></path><path d="M9 6c0-1 1-1.4 1-2.4"></path><path d="M13 6c0-1 1-1.4 1-2.4"></path></svg>
+    </div>
+
+    <div onClick="{{ goHome }}" style="width:84px;height:74px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;background:{{ navHomeBg }};color:{{ navHomeFg }};transition:background .15s" style-active="background:rgba(200,85,61,0.30)">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path><path d="M9 21v-7h6v7"></path></svg>
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.03em">Home</span>
+    </div>
+
+    <div onClick="{{ goPlan }}" style="width:84px;height:74px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;background:{{ navPlanBg }};color:{{ navPlanFg }};transition:background .15s" style-active="background:rgba(200,85,61,0.30)">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"></rect><path d="M3 10h18M9 4v3M15 4v3M9 14h6"></path></svg>
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.03em">Meals</span>
+    </div>
+
+    <div onClick="{{ goRecipes }}" style="width:84px;height:74px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;background:{{ navRecBg }};color:{{ navRecFg }};transition:background .15s" style-active="background:rgba(200,85,61,0.30)">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2Z"></path><path d="M9 8h6M9 12h6"></path></svg>
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.03em">Recipes</span>
+    </div>
+
+    <div onClick="{{ goCal }}" style="width:84px;height:74px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;background:{{ navCalBg }};color:{{ navCalFg }};transition:background .15s" style-active="background:rgba(200,85,61,0.30)">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.03em">Calendar</span>
+    </div>
+
+    <div onClick="{{ goTasks }}" style="width:84px;height:74px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;background:{{ navTaskBg }};color:{{ navTaskFg }};transition:background .15s" style-active="background:rgba(200,85,61,0.30)">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 7 2.5 2.5L11 5"></path><path d="m4 17 2.5 2.5L11 15"></path><path d="M14 8h6M14 18h6"></path></svg>
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.03em">Tasks</span>
+    </div>
+
+    <div style="flex:1"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="width:26px;height:26px;border-radius:999px;background:#C8553D;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#FFF8F2">M</div>
+      <div style="width:26px;height:26px;border-radius:999px;background:#4F7CA0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#FFF8F2">D</div>
+    </div>
+  </div>
+
+  <div style="flex:1;position:relative;overflow:hidden">
+
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:30px 34px 26px;height:820px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between">
+          <div>
+            <div style="font-family:'Newsreader',serif;font-size:38px;font-weight:500;letter-spacing:-0.02em;color:#FAF3E9">Good evening, Maya</div>
+            <div style="font-size:17px;color:#BFB0A0;margin-top:4px">Wednesday, August 12 · 3 things on today</div>
+          </div>
+          <div style="text-align:right;line-height:1">
+            <div style="font-family:'DM Mono',monospace;font-size:66px;font-weight:500;letter-spacing:-0.03em;color:#FAF3E9;font-variant-numeric:tabular-nums">{{ clock }}</div>
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073;margin-top:6px">{{ meridiem }} · 74°F clear</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 386px;gap:22px;flex:1;min-height:0">
+
+          <div style="display:flex;flex-direction:column;gap:18px;min-height:0">
+            <div style="display:flex;background:#2A2420;border:1px solid rgba(252,247,239,0.09);border-radius:24px;overflow:hidden;flex:0 0 268px;box-shadow:0 12px 28px rgba(0,0,0,0.28)">
+              <div style="width:214px;flex:0 0 214px;background:linear-gradient(160deg,#C8553D 0%,#8F3626 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:20px">
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:rgba(255,248,242,0.78)">Dinner</div>
+                <div style="font-family:'DM Mono',monospace;font-size:15px;color:#FFF8F2;margin-top:6px">30 min · serves 4</div>
+              </div>
+              <div style="flex:1;padding:24px 26px;display:flex;flex-direction:column;justify-content:space-between">
+                <div>
+                  <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Tonight</div>
+                  <div style="font-family:'Newsreader',serif;font-size:44px;font-weight:500;line-height:1.08;letter-spacing:-0.02em;color:#FAF3E9;margin-top:10px;text-wrap:pretty">Brown butter gnocchi</div>
+                  <div style="font-size:17px;color:#BFB0A0;margin-top:8px">Pillowy potato gnocchi crisped in nutty brown butter and sage.</div>
+                </div>
+                <div style="display:flex;gap:12px">
+                  <div onClick="{{ openTonight }}" style="height:52px;padding:0 26px;border-radius:14px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;font-size:17px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#A23F29">Start cooking</div>
+                  <div onClick="{{ goPlan }}" style="height:52px;padding:0 22px;border-radius:14px;border:1px solid rgba(252,247,239,0.20);color:#FAF3E9;display:flex;align-items:center;font-size:17px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:rgba(252,247,239,0.10)">See the week</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Rest of the week</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;flex:1;min-height:0">
+                <sc-for list="{{ upcoming }}" as="d" hint-placeholder-count="4">
+                  <div onClick="{{ d.onTap }}" style="background:#2A2420;border:1px solid rgba(252,247,239,0.09);border-radius:18px;padding:14px 14px 16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;min-height:0;transition:background .15s" style-active="background:#342C27">
+                    <div style="display:flex;align-items:center;justify-content:space-between">
+                      <span style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">{{ d.short }}</span>
+                      <span style="font-family:'DM Mono',monospace;font-size:13px;color:#8E8073">{{ d.date }}</span>
+                    </div>
+                    <div style="height:6px;border-radius:3px;background:{{ d.color }}"></div>
+                    <div style="font-family:'Newsreader',serif;font-size:19px;font-weight:500;line-height:1.2;color:{{ d.titleColor }};text-wrap:pretty">{{ d.title }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#2A2420;border:1px solid rgba(252,247,239,0.09);border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:14px;min-height:0">
+            <div style="display:flex;align-items:baseline;justify-content:space-between">
+              <div style="font-family:'Newsreader',serif;font-size:26px;font-weight:500;color:#FAF3E9">Today</div>
+              <div onClick="{{ goCal }}" style="font-size:15px;font-weight:600;color:#E37A57;cursor:pointer;padding:8px 4px">Week ›</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;flex:1;min-height:0">
+              <sc-for list="{{ todayEvents }}" as="e" hint-placeholder-count="4">
+                <div style="display:flex;gap:14px;align-items:center;background:#332C27;border-radius:14px;padding:14px 16px;min-height:64px">
+                  <div style="width:4px;align-self:stretch;border-radius:2px;background:{{ e.color }}"></div>
+                  <div style="flex:1">
+                    <div style="font-size:18px;font-weight:600;color:#FAF3E9;line-height:1.25">{{ e.title }}</div>
+                    <div style="font-size:14px;color:#8E8073;margin-top:2px">{{ e.who }}</div>
+                  </div>
+                  <div style="font-family:'DM Mono',monospace;font-size:16px;color:#BFB0A0;white-space:nowrap">{{ e.time }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div onClick="{{ goTasks }}" style="display:flex;align-items:center;justify-content:space-between;background:#3A3129;border-radius:14px;padding:16px 18px;min-height:56px;cursor:pointer">
+              <span style="font-size:16px;font-weight:600;color:#FAF3E9">{{ openTaskCount }} household tasks open</span>
+              <span style="font-size:15px;font-weight:600;color:#E3A85C">Board ›</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isPlan }}">
+      <div style="padding:30px 34px;height:820px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between">
+          <div>
+            <div style="font-family:'Newsreader',serif;font-size:36px;font-weight:500;letter-spacing:-0.02em;color:#FAF3E9">Meal plan</div>
+            <div style="font-size:16px;color:#8E8073;margin-top:4px;white-space:nowrap">August 10 – 16 · {{ plannedCount }} of 7 dinners planned</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div onClick="{{ openList }}" style="height:52px;padding:0 22px 0 18px;border-radius:999px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;gap:9px;font-size:16px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#A23F29">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.5a2 2 0 0 0 2-1.55L20.5 8H6"></path><circle cx="10" cy="20" r="1"></circle><circle cx="17" cy="20" r="1"></circle></svg>
+              Shopping list
+            </div>
+            <div style="width:1px;height:32px;background:rgba(252,247,239,0.14);margin:0 4px"></div>
+            <div style="width:52px;height:52px;border-radius:14px;border:1px solid rgba(252,247,239,0.18);display:flex;align-items:center;justify-content:center;color:#BFB0A0;font-size:20px">‹</div>
+            <div style="width:52px;height:52px;border-radius:14px;border:1px solid rgba(252,247,239,0.18);display:flex;align-items:center;justify-content:center;color:#BFB0A0;font-size:20px">›</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(0,470px);align-content:center;gap:12px;flex:1;min-height:0">
+          <sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+            <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
+              <div style="text-align:center;padding:8px 0;border-radius:12px;background:{{ d.headBg }}">
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:{{ d.headFg }}">{{ d.short }}</div>
+                <div style="font-family:'DM Mono',monospace;font-size:18px;color:{{ d.headFg }};margin-top:2px">{{ d.date }}</div>
+              </div>
+              <div onClick="{{ d.onTap }}" style="flex:1;min-height:0;border-radius:20px;overflow:hidden;cursor:pointer;background:{{ d.slotBg }};border:{{ d.slotBorder }};display:flex;flex-direction:column;transition:filter .15s" style-active="filter:brightness(1.18)">
+                <sc-if value="{{ d.hasMeal }}">
+                  <div style="height:150px;flex:0 0 150px;background:{{ d.fieldBg }};display:flex;align-items:flex-end;padding:12px">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,248,242,0.85)">{{ d.cat }}</span>
+                  </div>
+                  <div style="flex:1;padding:16px 14px 16px;display:flex;flex-direction:column;gap:10px">
+                    <div style="font-family:'Newsreader',serif;font-size:22px;font-weight:500;line-height:1.18;color:#FAF3E9;text-wrap:pretty">{{ d.title }}</div>
+                    <div style="font-family:'DM Mono',monospace;font-size:13px;color:#8E8073">{{ d.meta }}</div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ d.isOut }}">
+                  <div style="height:150px;flex:0 0 150px;background:linear-gradient(160deg,#8A7B6B 0%,#5A4E43 100%);display:flex;align-items:flex-end;padding:12px">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,248,242,0.85)">Eating out</span>
+                  </div>
+                  <div style="flex:1;padding:16px 14px;display:flex;flex-direction:column;gap:10px">
+                    <div style="font-family:'Newsreader',serif;font-size:22px;font-weight:500;line-height:1.18;color:#FAF3E9;text-wrap:pretty">{{ d.title }}</div>
+                    <div style="font-family:'DM Mono',monospace;font-size:13px;color:#8E8073">no cooking</div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ d.isEmpty }}">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:14px">
+                    <div style="width:56px;height:56px;border-radius:999px;background:rgba(200,85,61,0.16);display:flex;align-items:center;justify-content:center;color:#E37A57;font-size:30px;font-weight:300;line-height:1">+</div>
+                    <div style="font-size:15px;font-weight:600;color:#BFB0A0;text-align:center;line-height:1.3">Tap to add<br>dinner</div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ listGen }}">
+        <div style="position:absolute;inset:0;background:rgba(12,10,9,0.55);display:flex;justify-content:flex-end">
+          <div style="width:640px;height:820px;background:#241F1B;border-left:1px solid rgba(252,247,239,0.12);padding:28px 26px;display:flex;flex-direction:column;gap:20px;box-shadow:-24px 0 48px rgba(0,0,0,0.35)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+              <div>
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Shopping list</div>
+                <div style="font-family:'Newsreader',serif;font-size:30px;font-weight:500;color:#FAF3E9;margin-top:6px">August 10 – 16</div>
+              </div>
+              <div onClick="{{ closeList }}" style="width:52px;height:52px;border-radius:999px;background:#332C27;display:flex;align-items:center;justify-content:center;color:#BFB0A0;font-size:22px;cursor:pointer;transition:background .15s" style-active="background:#443A33">✕</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;color:#8E8073;font-size:18px">
+              <span style="width:14px;height:14px;border-radius:999px;background:#E37A57;animation:hubpulse 1.1s ease-in-out infinite"></span>
+              Reading {{ plannedCount }} dinners and merging what repeats…
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ listReview }}">
+        <div style="position:absolute;inset:0;background:rgba(12,10,9,0.55);display:flex;justify-content:flex-end">
+          <div style="width:720px;height:820px;background:#241F1B;border-left:1px solid rgba(252,247,239,0.12);padding:28px 26px 24px;display:flex;flex-direction:column;gap:18px;box-shadow:-24px 0 48px rgba(0,0,0,0.35)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+              <div>
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#E3A85C">Check before adding</div>
+                <div style="font-family:'Newsreader',serif;font-size:30px;font-weight:500;color:#FAF3E9;margin-top:6px">{{ reviewCount }} items from this week</div>
+                <div style="font-size:15px;color:#8E8073;margin-top:4px;white-space:nowrap">Tap anything you already have to leave it off the list.</div>
+              </div>
+              <div onClick="{{ closeList }}" style="width:52px;height:52px;border-radius:999px;background:#332C27;display:flex;align-items:center;justify-content:center;color:#BFB0A0;font-size:22px;cursor:pointer;transition:background .15s" style-active="background:#443A33">✕</div>
+            </div>
+            <div style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;align-content:start">
+              <sc-for list="{{ reviewAisles }}" as="a" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:{{ a.color }};padding:0 4px">{{ a.name }}</div>
+                  <sc-for list="{{ a.items }}" as="it" hint-placeholder-count="4">
+                    <div onClick="{{ it.onTap }}" style="display:flex;gap:12px;align-items:center;background:#2E2823;border-radius:14px;padding:9px 14px;min-height:52px;cursor:pointer;opacity:{{ it.op }};transition:background .15s,opacity .15s" style-active="background:#3A322C">
+                      <div style="width:26px;height:26px;flex:0 0 26px;border-radius:999px;border:2px solid {{ it.boxBorder }};background:{{ it.boxBg }};display:flex;align-items:center;justify-content:center">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ it.tick }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4 10-10"></path></svg>
+                      </div>
+                      <div style="flex:1;min-width:0">
+                        <div style="font-size:16px;font-weight:600;color:#FAF3E9;line-height:1.25;text-decoration:{{ it.deco }}">{{ it.name }}</div>
+                        <div style="font-family:'DM Mono',monospace;font-size:13px;color:#8E8073;margin-top:1px">{{ it.qty }}{{ it.note }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div onClick="{{ closeList }}" style="flex:1;height:58px;border-radius:16px;border:1px solid rgba(252,247,239,0.18);color:#BFB0A0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;cursor:pointer">Cancel</div>
+              <div onClick="{{ confirmList }}" style="flex:2;height:58px;border-radius:16px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#A23F29">{{ addLabel }}</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ listReady }}">
+        <div style="position:absolute;inset:0;background:rgba(12,10,9,0.55);display:flex;justify-content:flex-end">
+          <div style="width:720px;height:820px;background:#241F1B;border-left:1px solid rgba(252,247,239,0.12);padding:28px 26px 24px;display:flex;flex-direction:column;gap:18px;box-shadow:-24px 0 48px rgba(0,0,0,0.35)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+              <div>
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Shopping list · August 10 – 16</div>
+                <div style="font-family:'Newsreader',serif;font-size:30px;font-weight:500;color:#FAF3E9;margin-top:6px">{{ listLeft }} left to buy</div>
+                <div style="font-size:15px;color:#8E8073;margin-top:4px;white-space:nowrap">From {{ plannedCount }} planned dinners · tap once it's in the cart</div>
+              </div>
+              <div onClick="{{ closeList }}" style="width:52px;height:52px;border-radius:999px;background:#332C27;display:flex;align-items:center;justify-content:center;color:#BFB0A0;font-size:22px;cursor:pointer;transition:background .15s" style-active="background:#443A33">✕</div>
+            </div>
+            <div style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;align-content:start">
+              <sc-for list="{{ aisles }}" as="a" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:{{ a.color }};padding:0 4px">{{ a.name }}</div>
+                  <sc-for list="{{ a.items }}" as="it" hint-placeholder-count="4">
+                    <div onClick="{{ it.onTap }}" style="display:flex;gap:12px;align-items:center;background:#2E2823;border-radius:14px;padding:9px 14px;min-height:52px;cursor:pointer;opacity:{{ it.op }};transition:background .15s,opacity .15s" style-active="background:#3A322C">
+                      <div style="width:26px;height:26px;flex:0 0 26px;border-radius:999px;border:2px solid {{ it.boxBorder }};background:{{ it.boxBg }};display:flex;align-items:center;justify-content:center">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ it.tick }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4 10-10"></path></svg>
+                      </div>
+                      <div style="flex:1;min-width:0">
+                        <div style="font-size:16px;font-weight:600;color:#FAF3E9;line-height:1.25;text-decoration:{{ it.deco }}">{{ it.name }}</div>
+                        <div style="font-family:'DM Mono',monospace;font-size:13px;color:#8E8073;margin-top:1px">{{ it.qty }}{{ it.note }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <div onClick="{{ a.onAdd }}" style="display:flex;gap:12px;align-items:center;border:1px dashed rgba(252,247,239,0.20);border-radius:14px;padding:9px 14px;min-height:52px;cursor:pointer;color:#8E8073;transition:background .15s" style-active="background:#2E2823">
+                    <div style="width:26px;height:26px;flex:0 0 26px;border-radius:999px;background:rgba(200,85,61,0.18);color:#E37A57;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1">+</div>
+                    <span style="font-size:15px;font-weight:600">Add item</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:12px">
+              <div style="flex:1;height:58px;border-radius:16px;border:1px solid rgba(252,247,239,0.18);color:#BFB0A0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600">Send to Maya's phone</div>
+              <div onClick="{{ closeList }}" style="flex:1;height:58px;border-radius:16px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#A23F29">Done</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ kbOpen }}">
+        <div style="position:absolute;inset:0;z-index:40;display:flex;justify-content:flex-end;align-items:flex-end">
+          <div style="width:720px;background:#1C1815;border-top:1px solid rgba(252,247,239,0.14);border-left:1px solid rgba(252,247,239,0.12);padding:18px 20px 22px;display:flex;flex-direction:column;gap:12px;box-shadow:0 -20px 40px rgba(0,0,0,0.45)">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="flex:1;min-height:62px;background:#241F1B;border:1px solid rgba(252,247,239,0.18);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:3px">
+                <span style="font-size:20px;color:{{ draftColor }}">{{ draftText }}</span>
+                <span style="width:2px;height:24px;background:#E37A57;animation:hubpulse 1.1s ease-in-out infinite"></span>
+              </div>
+              <div onClick="{{ kbCancel }}" style="height:62px;padding:0 22px;border-radius:14px;border:1px solid rgba(252,247,239,0.18);color:#BFB0A0;display:flex;align-items:center;font-size:17px;font-weight:600;cursor:pointer">Cancel</div>
+              <div onClick="{{ kbSubmit }}" style="height:62px;padding:0 28px;border-radius:14px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;font-size:17px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#A23F29">Add</div>
+            </div>
+            <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Adding to {{ kbAisleLabel }}</div>
+            <sc-for list="{{ kbRows }}" as="row" hint-placeholder-count="3">
+              <div style="display:flex;gap:8px;justify-content:center">
+                <sc-for list="{{ row.keys }}" as="k" hint-placeholder-count="10">
+                  <div onClick="{{ k.onTap }}" style="width:62px;height:58px;border-radius:12px;background:#2E2823;color:#FAF3E9;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#C8553D">{{ k.ch }}</div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <div style="display:flex;gap:8px;justify-content:center">
+              <div onClick="{{ kbSpace }}" style="flex:1;height:58px;border-radius:12px;background:#2E2823;color:#BFB0A0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#3A322C">space</div>
+              <div onClick="{{ kbBack }}" style="width:120px;height:58px;border-radius:12px;background:#2E2823;color:#BFB0A0;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:background .15s" style-active="background:#3A322C">⌫</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ assignOpen }}">
+        <div style="position:absolute;inset:0;background:rgba(12,10,9,0.55);display:flex;justify-content:flex-end">
+          <div style="width:430px;height:820px;background:#241F1B;border-left:1px solid rgba(252,247,239,0.12);padding:26px 24px;display:flex;flex-direction:column;gap:16px;box-shadow:-24px 0 48px rgba(0,0,0,0.35)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+              <div>
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Assign dinner</div>
+                <div style="font-family:'Newsreader',serif;font-size:30px;font-weight:500;color:#FAF3E9;margin-top:6px">{{ assignLabel }}</div>
+              </div>
+              <div onClick="{{ closeAssign }}" style="width:52px;height:52px;border-radius:999px;background:#332C27;display:flex;align-items:center;justify-content:center;color:#BFB0A0;font-size:22px;cursor:pointer;transition:background .15s" style-active="background:#443A33">✕</div>
+            </div>
+            <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Not cooking</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div onClick="{{ pickOut }}" style="display:flex;align-items:center;gap:14px;background:#2E2823;border:1px solid rgba(252,247,239,0.10);border-radius:16px;padding:12px 14px;min-height:72px;cursor:pointer;transition:background .15s" style-active="background:#3A322C">
+                <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(160deg,#8A7B6B 0%,#5A4E43 100%);display:flex;align-items:center;justify-content:center;color:#FFF8F2">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8a2 2 0 0 0 4 0V3"></path><path d="M9 11v10"></path><path d="M17 3c-1.5 1.5-2 3.5-2 5.5S15.5 12 17 12v9"></path></svg>
+                </div>
+                <div style="flex:1">
+                  <div style="font-family:'Newsreader',serif;font-size:20px;font-weight:500;color:#FAF3E9;line-height:1.2">Going out to eat</div>
+                  <div style="font-size:14px;color:#8E8073;margin-top:3px">Nothing is added to the shopping list</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <sc-for list="{{ outSpots }}" as="o" hint-placeholder-count="4">
+                  <div onClick="{{ o.onPick }}" style="height:40px;padding:0 16px;border-radius:999px;border:1px solid rgba(252,247,239,0.16);color:#BFB0A0;display:flex;align-items:center;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#3A322C">{{ o.name }}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">From your library</div>
+            <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ recipes }}" as="r" hint-placeholder-count="7">
+                <div onClick="{{ r.onAssign }}" style="display:flex;align-items:center;gap:14px;background:#2E2823;border-radius:16px;padding:12px 14px;min-height:72px;cursor:pointer;transition:background .15s" style-active="background:#3A322C">
+                  <div style="width:56px;height:56px;border-radius:12px;background:{{ r.fieldBg }}"></div>
+                  <div style="flex:1">
+                    <div style="font-family:'Newsreader',serif;font-size:20px;font-weight:500;color:#FAF3E9;line-height:1.2">{{ r.title }}</div>
+                    <div style="font-family:'DM Mono',monospace;font-size:13px;color:#8E8073;margin-top:3px">{{ r.time }} · {{ r.cat }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isRecipes }}">
+      <div style="padding:30px 34px;height:820px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between">
+          <div>
+            <div style="font-family:'Newsreader',serif;font-size:36px;font-weight:500;letter-spacing:-0.02em;color:#FAF3E9">Recipes</div>
+            <div style="font-size:16px;color:#8E8073;margin-top:4px">{{ recipeCount }} in the family library</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div onClick="{{ openAdd }}" style="height:48px;padding:0 22px 0 18px;border-radius:999px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#A23F29">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+              Add recipe
+            </div>
+            <div style="width:1px;height:32px;background:rgba(252,247,239,0.14);margin:0 4px"></div>
+            <div style="height:48px;padding:0 20px;border-radius:999px;background:rgba(200,85,61,0.22);color:#E37A57;display:flex;align-items:center;font-size:15px;font-weight:600">All</div>
+            <div style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(252,247,239,0.16);color:#BFB0A0;display:flex;align-items:center;font-size:15px;font-weight:600">Dinner</div>
+            <div style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(252,247,239,0.16);color:#BFB0A0;display:flex;align-items:center;font-size:15px;font-weight:600">Vegetarian</div>
+            <div style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(252,247,239,0.16);color:#BFB0A0;display:flex;align-items:center;font-size:15px;font-weight:600">Under 30 min</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:16px;flex:1;min-height:0">
+          <sc-for list="{{ recipes }}" as="r" hint-placeholder-count="8">
+            <div onClick="{{ r.onOpen }}" style="background:#2A2420;border:1px solid rgba(252,247,239,0.09);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;min-height:0;transition:background .15s" style-active="background:#342C27">
+              <div style="height:104px;background:{{ r.fieldBg }};display:flex;align-items:flex-end;padding:12px">
+                <span style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,248,242,0.88)">{{ r.cat }}</span>
+              </div>
+              <div style="flex:1;padding:16px;display:flex;flex-direction:column;justify-content:space-between;gap:10px">
+                <div>
+                  <div style="font-family:'Newsreader',serif;font-size:23px;font-weight:500;line-height:1.16;color:#FAF3E9;text-wrap:pretty">{{ r.title }}</div>
+                  <div style="font-size:14px;color:#8E8073;margin-top:6px;line-height:1.35">{{ r.blurb }}</div>
+                </div>
+                <div style="font-family:'DM Mono',monospace;font-size:14px;color:#BFB0A0">{{ r.time }} · {{ r.serves }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ addOpen }}">
+        <div style="position:absolute;inset:0;background:rgba(12,10,9,0.55);display:flex;justify-content:flex-end">
+          <div style="width:470px;height:820px;background:#241F1B;border-left:1px solid rgba(252,247,239,0.12);padding:26px 24px;display:flex;flex-direction:column;gap:18px;box-shadow:-24px 0 48px rgba(0,0,0,0.35)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between">
+              <div>
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Add recipe</div>
+                <div style="font-family:'Newsreader',serif;font-size:30px;font-weight:500;color:#FAF3E9;margin-top:6px">{{ addTitle }}</div>
+              </div>
+              <div onClick="{{ closeAdd }}" style="width:52px;height:52px;border-radius:999px;background:#332C27;display:flex;align-items:center;justify-content:center;color:#BFB0A0;font-size:22px;cursor:pointer;transition:background .15s" style-active="background:#443A33">✕</div>
+            </div>
+
+            <sc-if value="{{ addMenu }}">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="font-size:17px;line-height:1.5;color:#BFB0A0">Pull one in from anywhere — the hub keeps it with the rest of your library.</div>
+                <div onClick="{{ pickLink }}" style="display:flex;gap:16px;align-items:center;background:#2E2823;border-radius:18px;padding:18px;min-height:88px;cursor:pointer;transition:background .15s" style-active="background:#3A322C">
+                  <div style="width:52px;height:52px;flex:0 0 52px;border-radius:14px;background:rgba(200,85,61,0.20);display:flex;align-items:center;justify-content:center;color:#E37A57">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"></path><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path></svg>
+                  </div>
+                  <div style="flex:1">
+                    <div style="font-size:20px;font-weight:600;color:#FAF3E9">Paste a link</div>
+                    <div style="font-size:15px;color:#8E8073;margin-top:3px">From a blog or recipe site</div>
+                  </div>
+                  <span style="color:#8E8073;font-size:22px">›</span>
+                </div>
+                <div onClick="{{ pickScan }}" style="display:flex;gap:16px;align-items:center;background:#2E2823;border-radius:18px;padding:18px;min-height:88px;cursor:pointer;transition:background .15s" style-active="background:#3A322C">
+                  <div style="width:52px;height:52px;flex:0 0 52px;border-radius:14px;background:rgba(110,139,87,0.22);display:flex;align-items:center;justify-content:center;color:#93B278">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"></path><path d="M4 12h16"></path></svg>
+                  </div>
+                  <div style="flex:1">
+                    <div style="font-size:20px;font-weight:600;color:#FAF3E9">Scan a cookbook page</div>
+                    <div style="font-size:15px;color:#8E8073;margin-top:3px">Uses the iPad camera</div>
+                  </div>
+                  <span style="color:#8E8073;font-size:22px">›</span>
+                </div>
+                <div onClick="{{ pickManual }}" style="display:flex;gap:16px;align-items:center;background:#2E2823;border-radius:18px;padding:18px;min-height:88px;cursor:pointer;transition:background .15s" style-active="background:#3A322C">
+                  <div style="width:52px;height:52px;flex:0 0 52px;border-radius:14px;background:rgba(217,150,43,0.20);display:flex;align-items:center;justify-content:center;color:#E3A85C">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                  </div>
+                  <div style="flex:1">
+                    <div style="font-size:20px;font-weight:600;color:#FAF3E9">Type it in</div>
+                    <div style="font-size:15px;color:#8E8073;margin-top:3px">Family recipes, index cards</div>
+                  </div>
+                  <span style="color:#8E8073;font-size:22px">›</span>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ addLink }}">
+              <div style="display:flex;flex-direction:column;gap:16px;flex:1;min-height:0">
+                <div style="background:#1C1815;border:1px solid rgba(252,247,239,0.14);border-radius:14px;padding:16px 18px;min-height:60px;display:flex;align-items:center">
+                  <span style="font-family:'DM Mono',monospace;font-size:15px;color:#BFB0A0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">smittenkitchen.com/sesame-chicken-traybake</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;color:#8E8073;font-size:17px">
+                  <span style="width:14px;height:14px;border-radius:999px;background:#E37A57;animation:hubpulse 1.1s ease-in-out infinite"></span>
+                  Reading the page…
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ addLinkFound }}">
+              <div style="display:flex;flex-direction:column;gap:16px;flex:1;min-height:0">
+                <div style="background:#1C1815;border:1px solid rgba(252,247,239,0.14);border-radius:14px;padding:16px 18px;min-height:60px;display:flex;align-items:center">
+                  <span style="font-family:'DM Mono',monospace;font-size:15px;color:#BFB0A0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">smittenkitchen.com/sesame-chicken-traybake</span>
+                </div>
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#93B278">Recipe found</div>
+                <div style="background:#2E2823;border-radius:20px;overflow:hidden">
+                  <div style="height:110px;background:linear-gradient(160deg,#C8553D 0%,#8F3626 100%)"></div>
+                  <div style="padding:18px">
+                    <div style="font-family:'Newsreader',serif;font-size:26px;font-weight:500;color:#FAF3E9;line-height:1.15">Sesame chicken traybake</div>
+                    <div style="font-family:'DM Mono',monospace;font-size:14px;color:#8E8073;margin-top:8px">45 min · serves 4 · 9 ingredients</div>
+                  </div>
+                </div>
+                <div onClick="{{ saveImport }}" style="height:60px;border-radius:16px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#A23F29">Save to library</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ addScan }}">
+              <div style="display:flex;flex-direction:column;gap:16px;flex:1;min-height:0">
+                <div style="position:relative;height:300px;border-radius:20px;background:#171412;border:1px solid rgba(252,247,239,0.12);overflow:hidden;display:flex;align-items:center;justify-content:center">
+                  <div style="width:74%;height:78%;border-radius:10px;border:2px dashed rgba(252,247,239,0.22)"></div>
+                  <div style="position:absolute;left:0;right:0;height:2px;background:#E37A57;box-shadow:0 0 18px rgba(227,122,87,0.9);animation:hubscan 2.2s ease-in-out infinite"></div>
+                </div>
+                <div style="font-size:17px;color:#8E8073">Hold the page flat under the camera.</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ addScanFound }}">
+              <div style="display:flex;flex-direction:column;gap:16px;flex:1;min-height:0">
+                <div style="position:relative;height:210px;border-radius:20px;background:#171412;border:1px solid rgba(147,178,120,0.45);overflow:hidden;display:flex;align-items:center;justify-content:center">
+                  <div style="width:74%;height:78%;border-radius:10px;border:2px solid rgba(147,178,120,0.55)"></div>
+                </div>
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#93B278">Recipe detected</div>
+                <div style="background:#2E2823;border-radius:18px;padding:18px">
+                  <div style="font-family:'Newsreader',serif;font-size:26px;font-weight:500;color:#FAF3E9;line-height:1.15">Gran's apple slab pie</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:14px;color:#8E8073;margin-top:8px">1 hr 10 · serves 12 · 11 ingredients</div>
+                </div>
+                <div onClick="{{ saveScan }}" style="height:60px;border-radius:16px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;cursor:pointer;transition:background .15s" style-active="background:#A23F29">Save to library</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ addManual }}">
+              <div style="display:flex;flex-direction:column;gap:16px;flex:1;min-height:0">
+                <div>
+                  <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073;margin-bottom:8px">Name</div>
+                  <div style="background:#1C1815;border:1px solid rgba(252,247,239,0.14);border-radius:14px;padding:16px 18px;min-height:60px;display:flex;align-items:center;font-size:19px;color:#FAF3E9">Dad's Sunday chili</div>
+                </div>
+                <div style="display:flex;gap:12px">
+                  <div style="flex:1">
+                    <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073;margin-bottom:8px">Time</div>
+                    <div style="background:#1C1815;border:1px solid rgba(252,247,239,0.14);border-radius:14px;padding:16px 18px;min-height:60px;display:flex;align-items:center;font-family:'DM Mono',monospace;font-size:17px;color:#FAF3E9">2 hr</div>
+                  </div>
+                  <div style="flex:1">
+                    <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073;margin-bottom:8px">Serves</div>
+                    <div style="background:#1C1815;border:1px solid rgba(252,247,239,0.14);border-radius:14px;padding:16px 18px;min-height:60px;display:flex;align-items:center;font-family:'DM Mono',monospace;font-size:17px;color:#FAF3E9">6</div>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073;margin-bottom:8px">Category</div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <div style="height:48px;padding:0 20px;border-radius:999px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;font-size:16px;font-weight:600">Dinner</div>
+                    <div style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(252,247,239,0.16);color:#BFB0A0;display:flex;align-items:center;font-size:16px;font-weight:600">Breakfast</div>
+                    <div style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(252,247,239,0.16);color:#BFB0A0;display:flex;align-items:center;font-size:16px;font-weight:600">Vegetarian</div>
+                    <div style="height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(252,247,239,0.16);color:#BFB0A0;display:flex;align-items:center;font-size:16px;font-weight:600">Dessert</div>
+                  </div>
+                </div>
+                <div onClick="{{ saveManual }}" style="height:60px;border-radius:16px;background:#C8553D;color:#FFF8F2;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;cursor:pointer;margin-top:4px;transition:background .15s" style-active="background:#A23F29">Save to library</div>
+              </div>
+            </sc-if>
+
+            <div style="flex:1"></div>
+            <sc-if value="{{ addBack }}">
+              <div onClick="{{ backToMenu }}" style="height:56px;border-radius:16px;border:1px solid rgba(252,247,239,0.18);color:#BFB0A0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;cursor:pointer">Back</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ detailOpen }}">
+        <div style="position:absolute;inset:0;background:#1E1A17;display:flex;flex-direction:column">
+          <div style="height:196px;background:{{ detail.fieldBg }};padding:26px 34px;display:flex;flex-direction:column;justify-content:space-between">
+            <div onClick="{{ closeDetail }}" style="width:56px;height:56px;border-radius:999px;background:rgba(20,17,15,0.30);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;color:#FFF8F2;font-size:24px;cursor:pointer">‹</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:rgba(255,248,242,0.82)">{{ detail.cat }}</div>
+              <div style="font-family:'Newsreader',serif;font-size:44px;font-weight:500;letter-spacing:-0.02em;color:#FFF8F2;margin-top:6px">{{ detail.title }}</div>
+            </div>
+          </div>
+          <div style="flex:1;min-height:0;display:grid;grid-template-columns:352px 1fr;gap:0">
+            <div style="background:#241F1B;padding:24px 26px;display:flex;flex-direction:column;gap:16px;min-height:0">
+              <div style="display:flex;gap:22px">
+                <div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Time</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:19px;color:#FAF3E9;margin-top:4px">{{ detail.time }}</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Serves</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:19px;color:#FAF3E9;margin-top:4px">{{ detail.servesNum }}</div>
+                </div>
+              </div>
+              <div style="height:1px;background:rgba(252,247,239,0.10)"></div>
+              <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Ingredients</div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <sc-for list="{{ detail.ingredients }}" as="ing" hint-placeholder-count="6">
+                  <div style="display:flex;gap:14px;align-items:baseline;padding:10px 0;border-bottom:1px solid rgba(252,247,239,0.07)">
+                    <span style="font-family:'DM Mono',monospace;font-size:16px;color:#E37A57;min-width:86px">{{ ing.qty }}</span>
+                    <span style="font-size:18px;color:#FAF3E9;line-height:1.3">{{ ing.name }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="padding:24px 34px;display:flex;flex-direction:column;gap:14px;min-height:0">
+              <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#8E8073">Method</div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{ detail.steps }}" as="s" hint-placeholder-count="4">
+                  <div style="display:flex;gap:18px;align-items:flex-start;background:#2A2420;border-radius:16px;padding:18px 20px">
+                    <div style="width:38px;height:38px;flex:0 0 38px;border-radius:999px;background:rgba(200,85,61,0.18);color:#E37A57;font-family:'DM Mono',monospace;font-size:17px;display:flex;align-items:center;justify-content:center">{{ s.n }}</div>
+                    <div style="font-size:20px;line-height:1.5;color:#EFE4D6;text-wrap:pretty">{{ s.text }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ isCal }}">
+      <div style="padding:30px 34px;height:820px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between">
+          <div>
+            <div style="font-family:'Newsreader',serif;font-size:36px;font-weight:500;letter-spacing:-0.02em;color:#FAF3E9">This week</div>
+            <div style="font-size:16px;color:#8E8073;margin-top:4px">August 10 – 16, 2026</div>
+          </div>
+          <div style="display:flex;gap:22px;align-items:center">
+            <div style="display:flex;gap:10px;align-items:center"><span style="width:14px;height:14px;border-radius:999px;background:#C8553D"></span><span style="font-size:17px;color:#BFB0A0">Maya</span></div>
+            <div style="display:flex;gap:10px;align-items:center"><span style="width:14px;height:14px;border-radius:999px;background:#4F7CA0"></span><span style="font-size:17px;color:#BFB0A0">Dan</span></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;flex:1;min-height:0">
+          <sc-for list="{{ calWeek }}" as="d" hint-placeholder-count="7">
+            <div style="background:{{ d.colBg }};border:{{ d.colBorder }};border-radius:18px;padding:14px 12px;display:flex;flex-direction:column;gap:10px;min-height:0">
+              <div style="text-align:center">
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:{{ d.headFg }}">{{ d.short }}</div>
+                <div style="font-family:'DM Mono',monospace;font-size:24px;color:{{ d.dateFg }};margin-top:2px">{{ d.date }}</div>
+              </div>
+              <div style="height:1px;background:rgba(252,247,239,0.08)"></div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ d.events }}" as="e" hint-placeholder-count="2">
+                  <div style="background:{{ e.bg }};border-left:3px solid {{ e.color }};border-radius:10px;padding:10px 10px">
+                    <div style="font-family:'DM Mono',monospace;font-size:13px;color:{{ e.color }}">{{ e.time }}</div>
+                    <div style="font-size:15px;font-weight:600;color:#FAF3E9;line-height:1.28;margin-top:3px">{{ e.title }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isTasks }}">
+      <div style="padding:30px 34px;height:820px;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between">
+          <div>
+            <div style="font-family:'Newsreader',serif;font-size:36px;font-weight:500;letter-spacing:-0.02em;color:#FAF3E9">Household</div>
+            <div style="font-size:16px;color:#8E8073;margin-top:4px">{{ openTaskCount }} open · tap a card to check it off</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;flex:1;min-height:0">
+          <sc-for list="{{ buckets }}" as="b" hint-placeholder-count="3">
+            <div style="background:#241F1B;border:1px solid rgba(252,247,239,0.08);border-radius:22px;padding:18px 16px;display:flex;flex-direction:column;gap:12px;min-height:0">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
+                <span style="font-size:12px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:{{ b.color }}">{{ b.name }}</span>
+                <span style="font-family:'DM Mono',monospace;font-size:14px;color:#8E8073">{{ b.openCount }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ b.tasks }}" as="t" hint-placeholder-count="4">
+                  <div onClick="{{ t.onToggle }}" style="display:flex;gap:14px;align-items:center;background:#2E2823;border-radius:16px;padding:14px 16px;min-height:76px;cursor:pointer;opacity:{{ t.op }};transition:background .15s,opacity .15s" style-active="background:#3A322C">
+                    <div style="width:34px;height:34px;flex:0 0 34px;border-radius:999px;border:2px solid {{ t.boxBorder }};background:{{ t.boxBg }};display:flex;align-items:center;justify-content:center">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.tickColor }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4 10-10"></path></svg>
+                    </div>
+                    <div style="flex:1">
+                      <div style="font-size:19px;font-weight:600;color:#FAF3E9;line-height:1.28;text-decoration:{{ t.deco }};text-wrap:pretty">{{ t.title }}</div>
+                      <div style="font-size:14px;color:#8E8073;margin-top:3px">{{ t.meta }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:820}}">
+const OUT_SPOTS = ["Pino's pizza", "Bo's taqueria", 'Noodle bar', 'Burger night'];
+const isOut = v => typeof v === 'string' && v.indexOf('out') === 0;
+const outPlace = v => (v && v.indexOf(':') > 0) ? v.slice(v.indexOf(':') + 1) : 'Eating out';
+
+const CAT = {
+  Dinner: { color: '#C8553D', field: 'linear-gradient(160deg,#C8553D 0%,#8F3626 100%)' },
+  Breakfast: { color: '#D9962B', field: 'linear-gradient(160deg,#D9962B 0%,#9A6414 100%)' },
+  Vegetarian: { color: '#6E8B57', field: 'linear-gradient(160deg,#6E8B57 0%,#455A34 100%)' },
+  Dessert: { color: '#7C4E6B', field: 'linear-gradient(160deg,#7C4E6B 0%,#4E2E43 100%)' }
+};
+
+const RECIPES = [
+  { id: 'gnocchi', title: 'Brown butter gnocchi', cat: 'Dinner', time: '30 min', serves: 'serves 4',
+    blurb: 'Crisped in nutty brown butter and sage.',
+    ingredients: [
+      { qty: '500 g', name: 'potato gnocchi' }, { qty: '85 g', name: 'unsalted butter' },
+      { qty: '12 leaves', name: 'fresh sage' }, { qty: '2 cloves', name: 'garlic, thinly sliced' },
+      { qty: '40 g', name: 'parmesan, grated' }, { qty: '½ tsp', name: 'flaky salt' }
+    ],
+    steps: [
+      'Boil the gnocchi in well-salted water just until they float, about 2 minutes. Drain and pat dry.',
+      'Melt the butter in a wide skillet over medium heat until it foams, smells nutty, and the milk solids turn amber.',
+      'Add the sage and garlic, then the gnocchi in one layer. Leave them alone 3 minutes so they crisp.',
+      'Toss, finish with parmesan and flaky salt, and serve straight from the pan.'
+    ] },
+  { id: 'chicken', title: 'Lemon herb roast chicken', cat: 'Dinner', time: '1 hr 15', serves: 'serves 5',
+    blurb: 'Sunday chicken with lemon under the skin.',
+    ingredients: [
+      { qty: '1.8 kg', name: 'whole chicken' }, { qty: '2', name: 'lemons, halved' },
+      { qty: '1 bunch', name: 'thyme' }, { qty: '3 tbsp', name: 'olive oil' },
+      { qty: '1 head', name: 'garlic, halved' }, { qty: '1 tbsp', name: 'kosher salt' }
+    ],
+    steps: [
+      'Heat the oven to 425°F. Pat the chicken dry and salt it all over, inside too.',
+      'Tuck thyme and lemon halves into the cavity; rub oil over the skin.',
+      'Roast 55–65 minutes until the thigh reads 165°F and the skin is deep gold.',
+      'Rest 15 minutes before carving, then spoon the pan juices over.'
+    ] },
+  { id: 'ramen', title: 'Miso mushroom ramen', cat: 'Vegetarian', time: '40 min', serves: 'serves 4',
+    blurb: 'Deep, savory broth built in one pot.',
+    ingredients: [
+      { qty: '400 g', name: 'mixed mushrooms' }, { qty: '3 tbsp', name: 'white miso' },
+      { qty: '1.4 L', name: 'vegetable stock' }, { qty: '4 nests', name: 'ramen noodles' },
+      { qty: '2 tsp', name: 'toasted sesame oil' }, { qty: '4', name: 'soft-boiled eggs' }
+    ],
+    steps: [
+      'Sear the mushrooms hard in a dry pot until browned, then add sesame oil.',
+      'Whisk the miso into a ladle of warm stock, then stir it back into the pot with the rest.',
+      'Simmer 15 minutes; taste and adjust with soy and a splash of rice vinegar.',
+      'Cook the noodles separately and ladle the broth over. Top with halved eggs and scallion.'
+    ] },
+  { id: 'salmon', title: 'Sheet-pan salmon & fennel', cat: 'Dinner', time: '35 min', serves: 'serves 4',
+    blurb: 'One pan, fennel sweet under the fish.',
+    ingredients: [
+      { qty: '4 fillets', name: 'salmon, skin on' }, { qty: '2 bulbs', name: 'fennel, sliced thin' },
+      { qty: '1', name: 'orange, sliced' }, { qty: '3 tbsp', name: 'olive oil' },
+      { qty: '½ tsp', name: 'chili flakes' }, { qty: '', name: 'salt and pepper' }
+    ],
+    steps: [
+      'Heat the oven to 400°F. Toss fennel and orange with oil, salt, and chili on a sheet pan.',
+      'Roast 15 minutes until the fennel edges brown.',
+      'Nestle the salmon on top, oil the skin, and roast 12 minutes more.',
+      'Finish with lemon and the fennel fronds.'
+    ] },
+  { id: 'orecchiette', title: 'Charred broccoli orecchiette', cat: 'Vegetarian', time: '30 min', serves: 'serves 4',
+    blurb: 'Blistered broccoli, garlic, lots of lemon.',
+    ingredients: [
+      { qty: '400 g', name: 'orecchiette' }, { qty: '2 heads', name: 'broccoli, in florets' },
+      { qty: '4 cloves', name: 'garlic, sliced' }, { qty: '60 ml', name: 'olive oil' },
+      { qty: '1', name: 'lemon, zest and juice' }, { qty: '50 g', name: 'pecorino' }
+    ],
+    steps: [
+      'Boil the pasta; save a mug of the water before draining.',
+      'Char the broccoli in a very hot pan with oil until spotted black in places.',
+      'Add garlic and chili for 30 seconds, then the pasta and a splash of the water.',
+      'Toss hard with pecorino, lemon zest, and juice until it turns glossy.'
+    ] },
+  { id: 'shakshuka', title: 'Weekend shakshuka', cat: 'Breakfast', time: '25 min', serves: 'serves 3',
+    blurb: 'Eggs poached in smoky tomato and pepper.',
+    ingredients: [
+      { qty: '2 tbsp', name: 'olive oil' }, { qty: '1', name: 'red pepper, diced' },
+      { qty: '1 tsp', name: 'smoked paprika' }, { qty: '800 g', name: 'crushed tomatoes' },
+      { qty: '5', name: 'eggs' }, { qty: '80 g', name: 'feta' }
+    ],
+    steps: [
+      'Soften the onion and pepper in oil for 8 minutes with the paprika and cumin.',
+      'Add the tomatoes and simmer until thick enough to hold a spoon trail.',
+      'Make wells and crack in the eggs; cover and cook 6 minutes for soft yolks.',
+      'Crumble over feta and parsley; eat with warm bread.'
+    ] },
+  { id: 'pancakes', title: 'Buttermilk pancakes', cat: 'Breakfast', time: '20 min', serves: 'makes 12',
+    blurb: 'The Saturday standard, thick and tangy.',
+    ingredients: [
+      { qty: '250 g', name: 'all-purpose flour' }, { qty: '2 tsp', name: 'baking powder' },
+      { qty: '400 ml', name: 'buttermilk' }, { qty: '2', name: 'eggs' },
+      { qty: '50 g', name: 'melted butter' }, { qty: '2 tbsp', name: 'sugar' }
+    ],
+    steps: [
+      'Whisk the dry ingredients; whisk the wet ones separately.',
+      'Fold together until just combined — lumps are fine. Rest 10 minutes.',
+      'Cook on a buttered griddle over medium until bubbles set at the edges, then flip.',
+      'Hold them in a 200°F oven until everyone is at the table.'
+    ] },
+  { id: 'plumcake', title: 'Olive oil plum cake', cat: 'Dessert', time: '55 min', serves: 'serves 8',
+    blurb: 'Late-summer plums sunk into a soft crumb.',
+    ingredients: [
+      { qty: '200 g', name: 'flour' }, { qty: '160 g', name: 'sugar' },
+      { qty: '120 ml', name: 'olive oil' }, { qty: '2', name: 'eggs' },
+      { qty: '6', name: 'plums, quartered' }, { qty: '1 tsp', name: 'vanilla' }
+    ],
+    steps: [
+      'Heat the oven to 350°F and line a 9-inch pan.',
+      'Beat the eggs and sugar until pale, then stream in the oil.',
+      'Fold in the dry ingredients, scrape into the pan, and press the plums on top.',
+      'Bake 40–45 minutes until the center springs back. Cool before slicing.'
+    ] }
+];
+
+const DAYS = [
+  { short: 'Mon', date: '10' }, { short: 'Tue', date: '11' }, { short: 'Wed', date: '12' },
+  { short: 'Thu', date: '13' }, { short: 'Fri', date: '14' }, { short: 'Sat', date: '15' },
+  { short: 'Sun', date: '16' }
+];
+const TODAY = 2;
+
+const MAYA = '#C8553D', DAN = '#4F7CA0';
+const CAL = [
+  [{ t: '7:40 AM', title: 'School drop-off', c: DAN }, { t: '6:00 PM', title: 'Nora — piano', c: MAYA }],
+  [{ t: '9:00 AM', title: 'Design review', c: MAYA }, { t: '5:30 PM', title: 'Pickup, then groceries', c: DAN }],
+  [{ t: '8:15 AM', title: 'School drop-off', c: DAN }, { t: '12:30 PM', title: 'Client call — Northside', c: MAYA }, { t: '4:30 PM', title: "Nora's soccer practice", c: DAN }, { t: '7:30 PM', title: 'Book club', c: MAYA }],
+  [{ t: '10:00 AM', title: 'Dentist — Dan', c: DAN }],
+  [{ t: '8:15 AM', title: 'School drop-off', c: MAYA }, { t: '3:00 PM', title: 'Early finish', c: DAN }, { t: '7:00 PM', title: 'Pizza night with the Ruizes', c: MAYA }],
+  [{ t: '9:30 AM', title: 'Soccer game — Fields 4', c: DAN }, { t: '2:00 PM', title: 'Farmers market run', c: MAYA }],
+  [{ t: '11:00 AM', title: 'Brunch at Gran’s', c: MAYA }, { t: '4:00 PM', title: 'Prep lunches for the week', c: DAN }]
+];
+
+const TASKS = [
+  { bucket: 0, id: 't1', title: 'Take the recycling out', meta: 'Bins go out tonight' },
+  { bucket: 0, id: 't2', title: 'Water the herb boxes', meta: 'Back deck · Maya' },
+  { bucket: 0, id: 't3', title: 'Sign the field-trip form', meta: 'Due Friday' },
+  { bucket: 0, id: 't4', title: 'Refill the dog food bin', meta: 'Two scoops left' },
+  { bucket: 1, id: 't5', title: "Book Nora's dentist check-up", meta: 'Before September' },
+  { bucket: 1, id: 't6', title: 'Replace the furnace filter', meta: 'Last changed in April' },
+  { bucket: 1, id: 't7', title: "Plan Nora's birthday", meta: 'Sept 6 · invite list first' },
+  { bucket: 2, id: 't8', title: 'Repaint the back deck', meta: 'Two dry weekends needed' },
+  { bucket: 2, id: 't9', title: 'Get three solar quotes', meta: 'One in, two to go' },
+  { bucket: 2, id: 't10', title: 'Research summer camps', meta: 'Registration opens January' }
+];
+
+const DRAFTON = '#FAF3E9';
+const DRAFTOFF = '#8E8073';
+
+const BUCKETS = [
+  { name: 'Short-term', color: '#E37A57' },
+  { name: 'Medium-term', color: '#E3A85C' },
+  { name: 'Long-term', color: '#93B278' }
+];
+
+class Component extends DCLogic {
+  state = {
+    screen: 'home',
+    plan: ['chicken', 'ramen', 'gnocchi', null, 'salmon', 'orecchiette', null],
+    assignDay: 3,
+    detailId: null,
+    done: { t2: true, t9: true },
+    addMode: null,
+    linkReady: false,
+    scanReady: false,
+    added: [],
+    extras: [
+      { name: 'Paper towels', qtys: ['2 rolls'], meals: 1, key: 'x-paper', aisle: 'Bathroom / misc', hand: true },
+      { name: 'Dish soap', qtys: ['1'], meals: 1, key: 'x-soap', aisle: 'Bathroom / misc', hand: true }
+    ],
+    listMode: null,
+    bought: {},
+    skipped: { 'olive oil': true, 'kosher salt': true, 'flour': true },
+    kbAisle: null,
+    draft: '',
+    now: new Date(),
+    fitScale: 1
+  };
+
+  fit = () => {
+    const s = Math.min(window.innerWidth / 1180, window.innerHeight / 820);
+    this.setState({ fitScale: Math.round(s * 1000) / 1000 });
+  };
+
+  componentDidMount() {
+    this._t = setInterval(() => this.setState({ now: new Date() }), 20000);
+    this.fit();
+    window.addEventListener('resize', this.fit);
+  }
+  componentWillUnmount() { clearInterval(this._t); window.removeEventListener('resize', this.fit); }
+
+  setOut(place) {
+    const plan = this.state.plan.slice();
+    plan[this.state.assignDay] = place ? 'out:' + place : 'out';
+    this.setState({ plan, assignDay: null });
+  }
+
+  go(screen) {
+    this.setState({ screen, detailId: null, addMode: null, listMode: null, assignDay: screen === 'plan' ? this.state.assignDay : null });
+  }
+  all() { return RECIPES.concat(this.state.added); }
+  recipe(id) { return this.all().find(r => r.id === id); }
+  addRecipe(r) {
+    this.setState(s => ({ added: s.added.concat([r]), addMode: null, linkReady: false, scanReady: false }));
+  }
+
+  startAdd(aisle) { this.setState({ kbAisle: aisle, draft: '' }); }
+  kbType(ch) { this.setState(s => ({ draft: (s.draft + ch).slice(0, 26) })); }
+  kbErase() { this.setState(s => ({ draft: s.draft.slice(0, -1) })); }
+  kbAdd() {
+    const t = this.state.draft.trim();
+    if (!t) return;
+    const name = t.charAt(0).toUpperCase() + t.slice(1);
+    this.setState(s => ({
+      extras: s.extras.concat([{ name, qtys: ['1'], meals: 1, key: 'x-' + Date.now(), aisle: s.kbAisle, hand: true }]),
+      kbAisle: null, draft: ''
+    }));
+  }
+
+  aisleOf(name) {
+    const n = name.toLowerCase();
+    const has = (arr) => arr.some(w => n.indexOf(w) > -1);
+    if (has(['chicken', 'salmon', 'beef', 'thigh'])) return 3;
+    if (has(['butter', 'parmesan', 'pecorino', 'egg', 'feta', 'cream', 'milk', 'gnocchi'])) return 2;
+    if (has(['sage', 'garlic', 'lemon', 'thyme', 'mushroom', 'fennel', 'orange', 'broccoli',
+      'scallion', 'onion', 'apple', 'plum', 'pepper,', 'red pepper', 'parsley'])) return 4;
+    return 1;
+  }
+
+  shoppingAisles() {
+    const groups = [
+      { name: 'Bathroom / misc', color: '#BFB0A0', items: [] },
+      { name: 'Pantry', color: '#E3A85C', items: [] },
+      { name: 'Cold', color: '#7FA9C7', items: [] },
+      { name: 'Meat', color: '#E37A57', items: [] },
+      { name: 'Produce', color: '#93B278', items: [] }
+    ];
+    const seen = {};
+    this.state.extras.forEach(x => {
+      const g = groups.find(gr => gr.name === x.aisle);
+      if (g) { seen[x.key] = x; g.items.push(x); }
+    });
+    this.state.plan.forEach(id => {
+      const r = id && this.recipe(id);
+      if (!r) return;
+      r.ingredients.forEach(ing => {
+        if (!ing.qty) return;
+        const base = ing.name.split(',')[0].trim();
+        const key = base.toLowerCase().replace(/es$/, 'e').replace(/s$/, '');
+        if (seen[key]) {
+          const it = seen[key];
+          if (it.qtys.indexOf(ing.qty) === -1) it.qtys.push(ing.qty);
+          it.meals += 1;
+        } else {
+          seen[key] = { name: base, qtys: [ing.qty], meals: 1, key };
+          groups[this.aisleOf(ing.name)].items.push(seen[key]);
+        }
+      });
+    });
+    return groups.filter(g => g.items.length);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const nav = (k) => ({
+      bg: s.screen === k ? 'rgba(200,85,61,0.20)' : 'transparent',
+      fg: s.screen === k ? '#E37A57' : '#8E8073'
+    });
+    const h = s.now.getHours() % 12 || 12;
+    const clock = h + ':' + String(s.now.getMinutes()).padStart(2, '0');
+
+    const week = DAYS.map((d, i) => {
+      const r = this.recipe(s.plan[i]);
+      const out = isOut(s.plan[i]);
+      const isToday = i === TODAY;
+      return {
+        short: d.short, date: d.date,
+        headBg: isToday ? 'rgba(200,85,61,0.20)' : 'transparent',
+        headFg: isToday ? '#E37A57' : '#8E8073',
+        hasMeal: !!r, isOut: !!out, isEmpty: !r && !out,
+        title: r ? r.title : (out ? outPlace(s.plan[i]) : ''),
+        cat: r ? r.cat : '', meta: r ? r.time : '',
+        fieldBg: r ? CAT[r.cat].field : 'transparent',
+        slotBg: (r || out) ? '#2A2420' : 'rgba(252,247,239,0.02)',
+        slotBorder: (r || out) ? '1px solid rgba(252,247,239,0.09)'
+          : (s.assignDay === i ? '2px dashed #C8553D' : '2px dashed rgba(252,247,239,0.16)'),
+        onTap: () => r ? this.setState({ screen: 'recipes', detailId: r.id }) : this.setState({ assignDay: i })
+      };
+    });
+
+    const upcoming = [3, 4, 5, 6].map(i => {
+      const r = this.recipe(s.plan[i]);
+      const out = isOut(s.plan[i]);
+      return {
+        short: DAYS[i].short, date: 'Aug ' + DAYS[i].date,
+        color: r ? CAT[r.cat].color : (out ? '#8A7B6B' : 'rgba(252,247,239,0.14)'),
+        title: r ? r.title : (out ? outPlace(s.plan[i]) : 'Nothing planned yet'),
+        titleColor: (r || out) ? '#FAF3E9' : '#8E8073',
+        onTap: () => this.setState({ screen: 'plan', assignDay: (r || out) ? null : i })
+      };
+    });
+
+    const recipes = this.all().map(r => ({
+      title: r.title, cat: r.cat, time: r.time, serves: r.serves, blurb: r.blurb,
+      fieldBg: CAT[r.cat].field,
+      onOpen: () => this.setState({ detailId: r.id }),
+      onAssign: () => {
+        const plan = s.plan.slice(); plan[s.assignDay] = r.id;
+        this.setState({ plan, assignDay: null });
+      }
+    }));
+
+    const aisleData = this.shoppingAisles();
+    const det = this.recipe(s.detailId);
+    const detail = det ? {
+      title: det.title, cat: det.cat, time: det.time,
+      servesNum: det.serves.replace('serves ', '').replace('makes ', ''),
+      fieldBg: CAT[det.cat].field,
+      ingredients: det.ingredients,
+      steps: det.steps.map((text, i) => ({ n: i + 1, text }))
+    } : null;
+
+    const calWeek = DAYS.map((d, i) => ({
+      short: d.short, date: d.date,
+      colBg: i === TODAY ? '#2A2420' : 'rgba(252,247,239,0.025)',
+      colBorder: i === TODAY ? '1px solid rgba(200,85,61,0.45)' : '1px solid rgba(252,247,239,0.07)',
+      headFg: i === TODAY ? '#E37A57' : '#8E8073',
+      dateFg: i === TODAY ? '#FAF3E9' : '#BFB0A0',
+      events: CAL[i].map(e => ({
+        time: e.t, title: e.title,
+        color: e.c === MAYA ? '#E37A57' : '#7FA9C7',
+        bg: e.c === MAYA ? 'rgba(200,85,61,0.13)' : 'rgba(79,124,160,0.15)'
+      }))
+    }));
+
+    const buckets = BUCKETS.map((b, bi) => {
+      const tasks = TASKS.filter(t => t.bucket === bi).map(t => {
+        const done = !!s.done[t.id];
+        return {
+          title: t.title, meta: t.meta,
+          op: done ? '0.42' : '1',
+          deco: done ? 'line-through' : 'none',
+          boxBorder: done ? '#6E8B57' : 'rgba(252,247,239,0.28)',
+          boxBg: done ? '#6E8B57' : 'transparent',
+          tickColor: done ? '#FBFCF7' : 'transparent',
+          onToggle: () => this.setState(st => ({ done: Object.assign({}, st.done, { [t.id]: !st.done[t.id] }) }))
+        };
+      });
+      return { name: b.name, color: b.color, tasks, openCount: tasks.filter(t => t.op === '1').length };
+    });
+
+    return {
+      fitScale: s.fitScale,
+      isHome: s.screen === 'home', isPlan: s.screen === 'plan',
+      isRecipes: s.screen === 'recipes', isCal: s.screen === 'cal', isTasks: s.screen === 'tasks',
+      navHomeBg: nav('home').bg, navHomeFg: nav('home').fg,
+      navPlanBg: nav('plan').bg, navPlanFg: nav('plan').fg,
+      navRecBg: nav('recipes').bg, navRecFg: nav('recipes').fg,
+      navCalBg: nav('cal').bg, navCalFg: nav('cal').fg,
+      navTaskBg: nav('tasks').bg, navTaskFg: nav('tasks').fg,
+      goHome: () => this.go('home'), goPlan: () => this.go('plan'),
+      goRecipes: () => this.go('recipes'), goCal: () => this.go('cal'), goTasks: () => this.go('tasks'),
+      clock, meridiem: s.now.getHours() >= 12 ? 'PM' : 'AM',
+      openTonight: () => this.setState({ screen: 'recipes', detailId: this.recipe(s.plan[TODAY]) ? s.plan[TODAY] : 'gnocchi' }),
+      todayEvents: CAL[TODAY].map(e => ({
+        time: e.t, title: e.title, who: e.c === MAYA ? 'Maya' : 'Dan',
+        color: e.c === MAYA ? '#E37A57' : '#7FA9C7'
+      })),
+      openTaskCount: TASKS.filter(t => !s.done[t.id]).length,
+      week, upcoming, recipes,
+      plannedCount: s.plan.filter(Boolean).length,
+      kbOpen: !!s.kbAisle,
+      kbAisleLabel: s.kbAisle || '',
+      draftText: s.draft || 'Type an item',
+      draftColor: s.draft ? DRAFTON : DRAFTOFF,
+      kbRows: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].map(row => ({
+        keys: row.split('').map(ch => ({ ch, onTap: () => this.kbType(ch) }))
+      })),
+      kbSpace: () => this.kbType(' '),
+      kbBack: () => this.kbErase(),
+      kbSubmit: () => this.kbAdd(),
+      kbCancel: () => this.setState({ kbAisle: null, draft: '' }),
+      listGen: s.listMode === 'gen',
+      listReview: s.listMode === 'review',
+      listReady: s.listMode === 'ready',
+      reviewCount: aisleData.reduce((n, a) => n + a.items.filter(i => !i.pantry && !s.skipped[i.key]).length, 0),
+      reviewAisles: aisleData.map(a => ({
+        name: a.name, color: a.color,
+        items: a.items.filter(i => !i.hand).map(i => {
+          const off = !!s.skipped[i.key];
+          return {
+            name: i.name,
+            qty: i.qtys.join(' + '),
+            note: off ? '  ·  already have it' : (i.meals > 1 ? '  ·  ' + i.meals + ' meals' : ''),
+            op: off ? '0.4' : '1',
+            deco: off ? 'line-through' : 'none',
+            boxBorder: off ? 'rgba(252,247,239,0.28)' : '#6E8B57',
+            boxBg: off ? 'transparent' : '#6E8B57',
+            tick: off ? 'transparent' : '#FBFCF7',
+            onTap: () => this.setState(st => ({ skipped: Object.assign({}, st.skipped, { [i.key]: !st.skipped[i.key] }) }))
+          };
+        })
+      })).filter(a => a.items.length),
+      confirmList: () => this.setState({ listMode: 'ready' }),
+      addLabel: 'Add ' + aisleData.reduce((n, a) => n + a.items.filter(i => !i.hand && !s.skipped[i.key]).length, 0) + ' to the list',
+      openList: () => {
+        this.setState({ listMode: 'gen' });
+        setTimeout(() => this.setState({ listMode: 'review' }), 1400);
+      },
+      closeList: () => this.setState({ listMode: null }),
+      listLeft: aisleData.reduce((n, a) => n + a.items.filter(i => !s.bought[i.key] && !s.skipped[i.key]).length, 0),
+      aisles: aisleData.map(a => ({
+        name: a.name, color: a.color,
+        onAdd: () => this.startAdd(a.name),
+        items: a.items.filter(i => !s.skipped[i.key]).map(i => {
+          const got = !!s.bought[i.key];
+          return {
+            name: i.name,
+            qty: i.qtys.join(' + '),
+            note: i.meals > 1 ? '  ·  ' + i.meals + ' meals' : '',
+            key: i.key,
+            op: got ? '0.42' : '1',
+            deco: got ? 'line-through' : 'none',
+            boxBorder: got ? '#6E8B57' : 'rgba(252,247,239,0.28)',
+            boxBg: got ? '#6E8B57' : 'transparent',
+            tick: got ? '#FBFCF7' : 'transparent',
+            onTap: () => this.setState(st => ({ bought: Object.assign({}, st.bought, { [i.key]: !st.bought[i.key] }) }))
+          };
+        })
+      })),
+      assignOpen: s.screen === 'plan' && s.assignDay !== null && s.assignDay !== undefined,
+      assignLabel: (s.assignDay !== null && s.assignDay !== undefined)
+        ? DAYS[s.assignDay].short + ', August ' + DAYS[s.assignDay].date : '',
+      closeAssign: () => this.setState({ assignDay: null }),
+      pickOut: () => this.setOut(null),
+      outSpots: OUT_SPOTS.map(name => ({ name, onPick: () => this.setOut(name) })),
+      recipeCount: this.all().length,
+      addOpen: !!s.addMode,
+      addMenu: s.addMode === 'menu',
+      addLink: s.addMode === 'link' && !s.linkReady,
+      addScan: s.addMode === 'scan' && !s.scanReady,
+      addManual: s.addMode === 'manual',
+      addBack: !!s.addMode && s.addMode !== 'menu',
+      addTitle: s.addMode === 'link' ? 'From a link'
+        : s.addMode === 'scan' ? 'Scan a page'
+        : s.addMode === 'manual' ? 'Type it in' : 'Where from?',
+      addLinkFound: s.addMode === 'link' && s.linkReady,
+      addScanFound: s.addMode === 'scan' && s.scanReady,
+      openAdd: () => this.setState({ addMode: 'menu', linkReady: false, scanReady: false }),
+      closeAdd: () => this.setState({ addMode: null, linkReady: false, scanReady: false }),
+      backToMenu: () => this.setState({ addMode: 'menu', linkReady: false, scanReady: false }),
+      pickLink: () => {
+        this.setState({ addMode: 'link', linkReady: false });
+        setTimeout(() => this.setState({ linkReady: true }), 1100);
+      },
+      pickScan: () => {
+        this.setState({ addMode: 'scan', scanReady: false });
+        setTimeout(() => this.setState({ scanReady: true }), 1800);
+      },
+      pickManual: () => this.setState({ addMode: 'manual' }),
+      saveImport: () => this.addRecipe({
+        id: 'sesame', title: 'Sesame chicken traybake', cat: 'Dinner', time: '45 min', serves: 'serves 4',
+        blurb: 'Sticky sesame chicken with charred scallion.',
+        ingredients: [
+          { qty: '8', name: 'chicken thighs' }, { qty: '3 tbsp', name: 'soy sauce' },
+          { qty: '2 tbsp', name: 'honey' }, { qty: '2 tbsp', name: 'sesame seeds' },
+          { qty: '1 bunch', name: 'scallions' }, { qty: '1 tbsp', name: 'rice vinegar' }
+        ],
+        steps: [
+          'Whisk soy, honey, vinegar, and sesame oil; toss the thighs in it and leave 20 minutes.',
+          'Spread skin-up on a lined tray and roast at 425°F for 30 minutes.',
+          'Add the scallions and sesame seeds; roast 8 minutes more until sticky.',
+          'Spoon the tray juices over and serve with rice.'
+        ]
+      }),
+      saveScan: () => this.addRecipe({
+        id: 'slabpie', title: "Gran's apple slab pie", cat: 'Dessert', time: '1 hr 10', serves: 'serves 12',
+        blurb: 'Scanned from the green church cookbook.',
+        ingredients: [
+          { qty: '8', name: 'baking apples, sliced' }, { qty: '150 g', name: 'sugar' },
+          { qty: '2 tsp', name: 'cinnamon' }, { qty: '2', name: 'pie crusts' },
+          { qty: '3 tbsp', name: 'cornstarch' }, { qty: '30 g', name: 'butter' }
+        ],
+        steps: [
+          'Toss the apples with sugar, cinnamon, and cornstarch; let them sit 15 minutes.',
+          'Line a sheet pan with the bottom crust and fill it evenly.',
+          'Lay the top crust over, crimp, vent, and brush with cream.',
+          'Bake at 375°F for 50 minutes until the juices bubble through the vents.'
+        ]
+      }),
+      saveManual: () => this.addRecipe({
+        id: 'chili', title: "Dad's Sunday chili", cat: 'Dinner', time: '2 hr', serves: 'serves 6',
+        blurb: 'Typed in from the index card box.',
+        ingredients: [
+          { qty: '900 g', name: 'ground beef' }, { qty: '2', name: 'onions, diced' },
+          { qty: '3 tbsp', name: 'chili powder' }, { qty: '800 g', name: 'crushed tomatoes' },
+          { qty: '2 cans', name: 'kidney beans' }, { qty: '1 square', name: 'dark chocolate' }
+        ],
+        steps: [
+          'Brown the beef hard in a heavy pot; do it in two batches so it sears.',
+          'Soften the onions, then bloom the chili powder and cumin in the fat.',
+          'Add tomatoes and beans, then simmer low for 90 minutes, stirring now and then.',
+          'Stir in the chocolate at the end and salt to taste.'
+        ]
+      }),
+      detailOpen: !!det, detail,
+      closeDetail: () => this.setState({ detailId: null }),
+      calWeek, buckets
+    };
+  }
+}
+
+</script>
+</body>
+</html>

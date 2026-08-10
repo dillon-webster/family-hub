@@ -1,0 +1,9 @@
+**/node_modules
+**/target
+**/dist
+**/test-results
+**/playwright-report
+design/
+*.zip
+.env
+.git
