@@ -11,11 +11,16 @@ const ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
  * of the sheet, sized for a hand reaching up to a wall.
  */
 export function HubKeyboard({
-  aisle,
+  hint,
+  placeholder = 'Type an item',
+  submitLabel = 'Add',
   onCancel,
   onSubmit,
 }: {
-  aisle: string;
+  /** One line under the field saying where what you type is going. */
+  hint: string;
+  placeholder?: string;
+  submitLabel?: string;
   onCancel: () => void;
   onSubmit: (value: string) => void;
 }) {
@@ -106,7 +111,7 @@ export function HubKeyboard({
             }}
           >
             <span style={{ fontSize: 20, color: draft ? '#FAF3E9' : '#8E8073' }}>
-              {draft || 'Type an item'}
+              {draft || placeholder}
             </span>
             <span
               style={{
@@ -158,11 +163,11 @@ export function HubKeyboard({
               } as React.CSSProperties
             }
           >
-            Add
+            {submitLabel}
           </button>
         </div>
 
-        <div className="overline">Adding to {aisle}</div>
+        <div className="overline">{hint}</div>
 
         {ROWS.map((row) => (
           <div key={row} style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>

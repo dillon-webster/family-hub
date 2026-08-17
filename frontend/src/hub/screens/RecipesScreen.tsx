@@ -1,31 +1,26 @@
 import { useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, SwatchBook } from 'lucide-react';
 
 import { useStore } from '../../api/store';
 import type { Recipe } from '../../api/types';
-import { CATEGORY_FIELD } from '../../design/category';
 import { AddRecipeSheet } from '../panels/AddRecipeSheet';
+import { CategoriesSheet } from '../panels/CategoriesSheet';
 import { RecipeDetail } from '../panels/RecipeDetail';
 
-type Filter = 'all' | 'Dinner' | 'Vegetarian' | 'quick';
-
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'Dinner', label: 'Dinner' },
-  { key: 'Vegetarian', label: 'Vegetarian' },
-  { key: 'quick', label: 'Under 30 min' },
-];
+/** 'all', 'quick', or a category name. */
+type Filter = string;
 
 export function RecipesScreen({
   openRecipe,
   setOpenRecipe,
 }: {
-  openRecipe: string | null;
-  setOpenRecipe: (id: string | null) => void;
+  openRecipe: { id: string; batch: number } | null;
+  setOpenRecipe: (recipe: { id: string; batch: number } | null) => void;
 }) {
-  const { data } = useStore();
+  const { data, categoryField } = useStore();
   const [filter, setFilter] = useState<Filter>('all');
   const [adding, setAdding] = useState(false);
+  const [editingCategories, setEditingCategories] = useState(false);
 
   const recipes = useMemo(() => {
     const all = data?.recipes ?? [];
@@ -38,8 +33,19 @@ export function RecipesScreen({
 
   if (!data) return null;
 
+  // Only categories that have something in them earn a chip: a filter that can
+  // only ever return nothing is a dead end on a wall display.
+  const used = new Set(data.recipes.map((recipe) => recipe.category));
+  const filters = [
+    { key: 'all', label: 'All' },
+    ...data.categories
+      .filter((category) => used.has(category.name))
+      .map((category) => ({ key: category.name, label: category.name })),
+    { key: 'quick', label: 'Under 30 min' },
+  ];
+
   const detail: Recipe | undefined = openRecipe
-    ? data.recipes.find((r) => r.id === openRecipe)
+    ? data.recipes.find((r) => r.id === openRecipe.id)
     : undefined;
 
   return (
@@ -79,9 +85,33 @@ export function RecipesScreen({
             Add recipe
           </button>
 
+          <button
+            type="button"
+            className="pressable"
+            onClick={() => setEditingCategories(true)}
+            style={
+              {
+                height: 48,
+                padding: '0 18px',
+                borderRadius: 999,
+                border: '1px solid rgba(252,247,239,0.18)',
+                color: '#BFB0A0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: 15,
+                fontWeight: 600,
+                '--bg-press': 'rgba(252,247,239,0.08)',
+              } as React.CSSProperties
+            }
+          >
+            <SwatchBook size={18} strokeWidth={2} />
+            Categories
+          </button>
+
           <div style={{ width: 1, height: 32, background: 'rgba(252,247,239,0.14)', margin: '0 4px' }} />
 
-          {FILTERS.map(({ key, label }) => {
+          {filters.map(({ key, label }) => {
             const active = filter === key;
             return (
               <button
@@ -152,7 +182,7 @@ export function RecipesScreen({
               key={recipe.id}
               type="button"
               className="pressable"
-              onClick={() => setOpenRecipe(recipe.id)}
+              onClick={() => setOpenRecipe({ id: recipe.id, batch: 1 })}
               style={
                 {
                   border: '1px solid rgba(252,247,239,0.09)',
@@ -171,7 +201,7 @@ export function RecipesScreen({
                 style={{
                   height: 104,
                   flex: '0 0 104px',
-                  background: CATEGORY_FIELD[recipe.category],
+                  background: categoryField(recipe.category),
                   display: 'flex',
                   alignItems: 'flex-end',
                   padding: 12,
@@ -219,8 +249,17 @@ export function RecipesScreen({
         </div>
       )}
 
+      {editingCategories && (
+        <CategoriesSheet onClose={() => setEditingCategories(false)} />
+      )}
       {adding && <AddRecipeSheet onClose={() => setAdding(false)} />}
-      {detail && <RecipeDetail recipe={detail} onClose={() => setOpenRecipe(null)} />}
+      {detail && (
+        <RecipeDetail
+          recipe={detail}
+          batch={openRecipe?.batch ?? 1}
+          onClose={() => setOpenRecipe(null)}
+        />
+      )}
     </div>
   );
 }

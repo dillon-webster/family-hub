@@ -244,6 +244,10 @@ pub struct AisleGroup {
 pub struct PlannedRecipe {
     pub title: String,
     pub ingredients: Vec<Ingredient>,
+    /// How many times over it is being made. Quantities are multiplied by this
+    /// before they are merged, so a doubled night reaches the shop as the
+    /// amount actually needed rather than the recipe's own.
+    pub batch: i16,
 }
 
 /// A hand-added item as stored.
@@ -295,21 +299,30 @@ pub fn build(
     }
 
     for recipe in planned {
+        // A doubled night says so on the list, because "2 kg beef mince" with
+        // no explanation reads as a mistake next to a recipe that calls for 1.
+        let source = if recipe.batch > 1 {
+            format!("{} ×{}", recipe.title, recipe.batch)
+        } else {
+            recipe.title.clone()
+        };
+
         for ingredient in &recipe.ingredients {
             // No amount means it is a seasoning the house already has.
             if ingredient.qty.trim().is_empty() {
                 continue;
             }
             let key = normalize_key(&ingredient.name);
+            let qty = crate::recipe_import::scale_quantity(&ingredient.qty, recipe.batch);
 
             if let Some(&position) = index.get(&key) {
                 let item = &mut items[position];
-                if !item.qtys.contains(&ingredient.qty) {
-                    item.qtys.push(ingredient.qty.clone());
+                if !item.qtys.contains(&qty) {
+                    item.qtys.push(qty);
                 }
                 item.meals += 1;
-                if !item.sources.contains(&recipe.title) {
-                    item.sources.push(recipe.title.clone());
+                if !item.sources.contains(&source) {
+                    item.sources.push(source.clone());
                 }
                 continue;
             }
@@ -320,12 +333,12 @@ pub fn build(
                 name: display_name(&ingredient.name),
                 aisle: aisle_for(&ingredient.name),
                 key,
-                qtys: vec![ingredient.qty.clone()],
+                qtys: vec![qty],
                 meals: 1,
                 hand: false,
                 bought: state.bought,
                 skipped: state.skipped,
-                sources: vec![recipe.title.clone()],
+                sources: vec![source.clone()],
                 added_by: None,
             });
         }
@@ -393,10 +406,12 @@ mod tests {
             PlannedRecipe {
                 title: "Brown butter gnocchi".into(),
                 ingredients: vec![ing("2 cloves", "garlic, thinly sliced")],
+                batch: 1,
             },
             PlannedRecipe {
                 title: "Lemon herb roast chicken".into(),
                 ingredients: vec![ing("1 head", "garlic, halved")],
+                batch: 1,
             },
         ];
 
@@ -414,15 +429,68 @@ mod tests {
     }
 
     #[test]
+    fn a_double_batch_reaches_the_shop_doubled() {
+        let planned = vec![PlannedRecipe {
+            title: "Dad's Sunday chili".into(),
+            ingredients: vec![ing("900 g", "ground beef"), ing("", "salt and pepper")],
+            batch: 2,
+        }];
+
+        let items: Vec<ListItem> = build(&planned, &[], &HashMap::new())
+            .into_iter()
+            .flat_map(|g| g.items)
+            .collect();
+
+        let beef = items.iter().find(|i| i.key == "ground beef").unwrap();
+        assert_eq!(beef.qtys, vec!["1.8 kg"]);
+        // The list says why the amount is what it is, so 1.8 kg next to a
+        // recipe calling for 900 g does not read as a bug.
+        assert_eq!(beef.sources, vec!["Dad's Sunday chili ×2"]);
+
+        // Doubling does not conjure an amount for something that never had one.
+        assert!(!items.iter().any(|i| i.key == "salt and pepper"));
+    }
+
+    #[test]
+    fn the_same_dinner_twice_at_different_sizes_lists_both_amounts() {
+        // Not summed, for the reason every other amount on this list is not
+        // summed: 500 g plus 1 kg is arithmetic the hub can do and a unit
+        // mismatch it cannot see coming.
+        let planned = vec![
+            PlannedRecipe {
+                title: "Gnocchi".into(),
+                ingredients: vec![ing("500 g", "potato gnocchi")],
+                batch: 1,
+            },
+            PlannedRecipe {
+                title: "Gnocchi".into(),
+                ingredients: vec![ing("500 g", "potato gnocchi")],
+                batch: 2,
+            },
+        ];
+
+        let items: Vec<ListItem> = build(&planned, &[], &HashMap::new())
+            .into_iter()
+            .flat_map(|g| g.items)
+            .collect();
+
+        let gnocchi = items.iter().find(|i| i.key == "potato gnocchi").unwrap();
+        assert_eq!(gnocchi.qtys, vec!["500 g", "1 kg"]);
+        assert_eq!(gnocchi.meals, 2);
+    }
+
+    #[test]
     fn an_identical_amount_is_not_listed_twice() {
         let planned = vec![
             PlannedRecipe {
                 title: "A".into(),
                 ingredients: vec![ing("3 tbsp", "olive oil")],
+                batch: 1,
             },
             PlannedRecipe {
                 title: "B".into(),
                 ingredients: vec![ing("3 tbsp", "olive oil")],
+                batch: 1,
             },
         ];
 
@@ -442,6 +510,7 @@ mod tests {
         let planned = vec![PlannedRecipe {
             title: "Sheet-pan salmon & fennel".into(),
             ingredients: vec![ing("", "salt and pepper"), ing("2 bulbs", "fennel, sliced thin")],
+            batch: 1,
         }];
 
         let keys: Vec<String> = build(&planned, &[], &HashMap::new())
@@ -457,6 +526,7 @@ mod tests {
         let planned = vec![PlannedRecipe {
             title: "A".into(),
             ingredients: vec![ing("1", "lemon"), ing("250 g", "flour")],
+            batch: 1,
         }];
         let states = HashMap::from([
             (
@@ -489,6 +559,7 @@ mod tests {
         let planned = vec![PlannedRecipe {
             title: "A".into(),
             ingredients: vec![ing("1", "lemon"), ing("4 fillets", "salmon, skin on")],
+            batch: 1,
         }];
 
         let labels: Vec<&str> = build(&planned, &[], &HashMap::new())

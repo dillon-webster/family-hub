@@ -6,7 +6,6 @@ import { useStore } from '../api/store';
 import type { ImportPreview } from '../api/types';
 import { CameraFrame } from '../components/CameraFrame';
 import { ManualRecipeForm } from '../components/ManualRecipeForm';
-import { CATEGORY_FIELD } from '../design/category';
 
 /** Mirrors MAX_PAGES on the server, which rejects more. */
 const MAX_PAGES = 4;
@@ -20,7 +19,7 @@ export function CaptureScreen({
   flash: (message: string) => void;
   onDone: () => void;
 }) {
-  const { refresh, data } = useStore();
+  const { refresh, data, categoryField } = useStore();
   const [mode, setMode] = useState<Mode>('camera');
   const [url, setUrl] = useState('');
   const [busy, setBusy] = useState(false);
@@ -145,7 +144,7 @@ export function CaptureScreen({
           <div
             style={{
               height: 120,
-              background: CATEGORY_FIELD[found.category],
+              background: categoryField(found.category),
               display: 'flex',
               alignItems: 'flex-end',
               padding: 14,

@@ -10,8 +10,9 @@ import {
 } from 'react';
 
 import { api } from './client';
-import type { Bootstrap, PlanEntry, Recipe, Topic } from './types';
+import type { Bootstrap, MealSlot, PlanEntry, Recipe, RecipeCategory, Topic } from './types';
 import { addDays, isoDate, mondayOf } from '../lib/week';
+import { UNKNOWN_COLOR, UNKNOWN_FIELD, fieldOf } from '../design/category';
 
 interface Store {
   data: Bootstrap | null;
@@ -26,10 +27,17 @@ interface Store {
   /** The clock, ticking every 20s as the design specifies. */
   now: Date;
   refresh: () => Promise<void>;
-  /** Look up a planned day. */
-  entryFor: (day: Date) => PlanEntry | undefined;
-  recipeFor: (day: Date) => Recipe | undefined;
+  /** Look up a planned meal. Defaults to dinner, which is the plan's spine. */
+  entryFor: (day: Date, slot?: MealSlot) => PlanEntry | undefined;
+  recipeFor: (day: Date, slot?: MealSlot) => Recipe | undefined;
   recipeById: (id: string | null | undefined) => Recipe | undefined;
+  /** The household's categories, in their own order. */
+  categories: RecipeCategory[];
+  categoryByName: (name: string) => RecipeCategory | undefined;
+  /** The gradient a category paints its cards with, by category name. */
+  categoryField: (name: string) => string;
+  /** That category's flat accent, for spines and dots. */
+  categoryColor: (name: string) => string;
 }
 
 const StoreContext = createContext<Store | null>(null);
@@ -175,9 +183,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Store>(() => {
     const byId = new Map((data?.recipes ?? []).map((recipe) => [recipe.id, recipe]));
-    const byDay = new Map((data?.plan ?? []).map((entry) => [entry.day, entry]));
+    // Keyed by day *and* slot now that a day carries both a dinner and a lunch.
+    const byMeal = new Map(
+      (data?.plan ?? []).map((entry) => [`${entry.day}:${entry.slot}`, entry]),
+    );
+    const categories = data?.categories ?? [];
+    const byName = new Map(categories.map((category) => [category.name, category]));
 
-    const entryFor = (day: Date) => byDay.get(isoDate(day));
+    const entryFor = (day: Date, slot: MealSlot = 'dinner') =>
+      byMeal.get(`${isoDate(day)}:${slot}`);
 
     return {
       data,
@@ -190,10 +204,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       refresh: () => load(weekKeyRef.current),
       entryFor,
       recipeById: (id) => (id ? byId.get(id) : undefined),
-      recipeFor: (day) => {
-        const entry = entryFor(day);
+      recipeFor: (day, slot) => {
+        const entry = entryFor(day, slot);
         return entry?.recipe_id ? byId.get(entry.recipe_id) : undefined;
       },
+      categories,
+      categoryByName: (name) => byName.get(name),
+      categoryField: (name) => {
+        const category = byName.get(name);
+        return category ? fieldOf(category) : UNKNOWN_FIELD;
+      },
+      categoryColor: (name) => byName.get(name)?.color_from ?? UNKNOWN_COLOR,
     };
   }, [data, error, loading, connected, weekStart, now, load]);
 

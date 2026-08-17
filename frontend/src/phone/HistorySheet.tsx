@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
 import { useStore } from '../api/store';
-import { CATEGORY_FIELD, OUT_FIELD } from '../design/category';
+import { LEFTOVERS_FIELD, OUT_FIELD } from '../design/category';
 import { loadHistory, type Week } from '../lib/history';
 import { dayNumber, dayShort, isoDate, weekRange } from '../lib/week';
 
@@ -14,7 +14,7 @@ import { dayNumber, dayShort, isoDate, weekRange } from '../lib/week';
  * remembering what you ate, not cooking it.
  */
 export function HistorySheet({ onClose }: { onClose: () => void }) {
-  const { recipeById } = useStore();
+  const { recipeById, categoryField } = useStore();
   const [weeks, setWeeks] = useState<Week[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -151,7 +151,11 @@ export function HistorySheet({ onClose }: { onClose: () => void }) {
                         height: 38,
                         flex: '0 0 38px',
                         borderRadius: 9,
-                        background: recipe ? CATEGORY_FIELD[recipe.category] : OUT_FIELD,
+                        background: recipe
+                          ? categoryField(recipe.category)
+                          : entry.kind === 'leftovers'
+                            ? LEFTOVERS_FIELD
+                            : OUT_FIELD,
                       }}
                     />
 

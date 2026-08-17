@@ -12,7 +12,7 @@ use anyhow::{Context, anyhow};
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use crate::models::{Category, Ingredient, RecipeDraft};
+use crate::models::{Ingredient, RecipeDraft};
 
 const API_URL: &str = "https://api.anthropic.com/v1/messages";
 const API_VERSION: &str = "2023-06-01";
@@ -33,9 +33,9 @@ things listed without an amount, such as salt and pepper to taste; the shopping 
 list deliberately skips those.
 
 `time_label` is how a person would say it (\"30 min\", \"1 hr 15\"), and \
-`time_minutes` is that same duration as a whole number. Pick the category that \
-fits how the household would eat it: Vegetarian wins over Dinner for a meatless \
-main, Dessert for anything sweet at the end of a meal. `blurb` is one short \
+`time_minutes` is that same duration as a whole number. The categories offered \
+are this household's own, so pick the one that fits how they would eat the \
+dish — prefer the more specific of two that both apply. `blurb` is one short \
 sentence someone would read on a wall display before deciding to cook it.
 
 Transcribe only what is there. If part of the page is cut off or unreadable, \
@@ -45,14 +45,18 @@ leave that entry out rather than inventing it.";
 ///
 /// Every object sets `additionalProperties: false` and lists every key in
 /// `required` — structured outputs rejects a schema that does not.
-fn recipe_schema() -> Value {
+/// The categories are the household's own, passed in rather than fixed, so the
+/// model picks from the list this kitchen actually uses. Constraining the enum
+/// is what makes the answer land in an existing category instead of inventing
+/// "Weeknight" and falling back to the first one on save.
+fn recipe_schema(categories: &[String]) -> Value {
     json!({
         "type": "object",
         "properties": {
             "title": { "type": "string" },
             "category": {
                 "type": "string",
-                "enum": ["Dinner", "Breakfast", "Vegetarian", "Dessert"]
+                "enum": categories
             },
             "time_label": { "type": "string" },
             "time_minutes": { "type": "integer" },
@@ -104,7 +108,7 @@ enum ContentBlock {
 #[derive(Debug, Deserialize)]
 struct ExtractedRecipe {
     title: String,
-    category: Category,
+    category: String,
     time_label: String,
     time_minutes: Option<i32>,
     serves_label: String,
@@ -158,7 +162,11 @@ impl<'a> Claude<'a> {
     /// rather than inferred, and the closing instruction is explicit that the
     /// pages must be merged — otherwise a heading repeated on both sides of a
     /// card comes back as a duplicated ingredient.
-    pub async fn read_images(&self, pages: &[(String, String)]) -> anyhow::Result<RecipeDraft> {
+    pub async fn read_images(
+        &self,
+        pages: &[(String, String)],
+        categories: &[String],
+    ) -> anyhow::Result<RecipeDraft> {
         let mut content: Vec<Value> = Vec::with_capacity(pages.len() * 2 + 1);
 
         for (index, (data, media_type)) in pages.iter().enumerate() {
@@ -194,12 +202,17 @@ impl<'a> Claude<'a> {
             }
         }));
 
-        self.extract(Value::Array(content)).await
+        self.extract(Value::Array(content), categories).await
     }
 
     /// Read a recipe out of page text, for sites that publish no structured
     /// recipe data. Only reached after the JSON-LD parser has come up empty.
-    pub async fn read_text(&self, page_text: &str, url: &str) -> anyhow::Result<RecipeDraft> {
+    pub async fn read_text(
+        &self,
+        page_text: &str,
+        url: &str,
+        categories: &[String],
+    ) -> anyhow::Result<RecipeDraft> {
         // Recipe pages carry a lot of preamble; the recipe itself is reliably
         // in the first stretch of extracted text, and trimming keeps a very
         // long article from dominating the request.
@@ -214,10 +227,14 @@ impl<'a> Claude<'a> {
             )
         }]);
 
-        self.extract(content).await
+        self.extract(content, categories).await
     }
 
-    async fn extract(&self, content: Value) -> anyhow::Result<RecipeDraft> {
+    async fn extract(
+        &self,
+        content: Value,
+        categories: &[String],
+    ) -> anyhow::Result<RecipeDraft> {
         let body = json!({
             "model": self.model,
             "max_tokens": 16000,
@@ -227,7 +244,7 @@ impl<'a> Claude<'a> {
             // not need. The schema does the rest of the work.
             "output_config": {
                 "effort": "medium",
-                "format": { "type": "json_schema", "schema": recipe_schema() }
+                "format": { "type": "json_schema", "schema": recipe_schema(categories) }
             },
             "messages": [{ "role": "user", "content": content }]
         });
@@ -312,7 +329,7 @@ mod tests {
     fn extracted(ingredients: Vec<Ingredient>, steps: Vec<String>) -> ExtractedRecipe {
         ExtractedRecipe {
             title: "Chipotle bean burritos".into(),
-            category: Category::Dinner,
+            category: "Dinner".into(),
             time_label: "25 min".into(),
             time_minutes: Some(25),
             serves_label: "serves 4".into(),

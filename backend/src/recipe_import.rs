@@ -9,7 +9,7 @@ use anyhow::{Context, anyhow};
 use scraper::{Html, Selector};
 use serde_json::Value;
 
-use crate::models::{Category, Ingredient, RecipeDraft};
+use crate::models::{Ingredient, RecipeDraft};
 
 /// Units that may follow a number in an ingredient line. Only consulted after
 /// a number has been seen, so "large egg" keeps "large" as part of the name.
@@ -84,6 +84,208 @@ pub fn split_quantity(line: &str) -> Ingredient {
     }
 }
 
+// ------------------------------------------------------------- scaling ---
+//
+// Doubling a batch has to happen to the *quantity string*, because that is the
+// only form an amount exists in — the design renders "2 cloves" and "1 hr 15"
+// as written, and nothing upstream ever turned them into numbers. Everything
+// below is in service of one rule: a household reading the shopping list should
+// never have to do arithmetic that the hub could have done, and should never be
+// shown a number the hub is not sure of.
+
+/// The vulgar fractions recipe sites and cookbooks use, as their values.
+fn vulgar_fraction(c: char) -> Option<f64> {
+    Some(match c {
+        '½' => 0.5,
+        '⅓' => 1.0 / 3.0,
+        '⅔' => 2.0 / 3.0,
+        '¼' => 0.25,
+        '¾' => 0.75,
+        '⅕' => 0.2,
+        '⅖' => 0.4,
+        '⅗' => 0.6,
+        '⅘' => 0.8,
+        '⅙' => 1.0 / 6.0,
+        '⅚' => 5.0 / 6.0,
+        '⅐' => 1.0 / 7.0,
+        '⅛' => 0.125,
+        '⅜' => 0.375,
+        '⅝' => 0.625,
+        '⅞' => 0.875,
+        '⅑' => 1.0 / 9.0,
+        '⅒' => 0.1,
+        _ => return None,
+    })
+}
+
+/// One numeric token: `2`, `1.5`, `1/2`, `½`, or `1½`.
+fn parse_number(token: &str) -> Option<f64> {
+    let token = token.trim_matches(|c: char| c == '(' || c == ')' || c == ',');
+    if token.is_empty() {
+        return None;
+    }
+
+    // A vulgar fraction may be glued to a leading whole number: "1½ cups".
+    let (digits, rest): (String, String) = token.chars().partition(|c| vulgar_fraction(*c).is_none());
+    if !rest.is_empty() {
+        let fraction: f64 = rest.chars().filter_map(vulgar_fraction).sum();
+        let whole = if digits.is_empty() {
+            0.0
+        } else {
+            digits.parse::<f64>().ok()?
+        };
+        return Some(whole + fraction);
+    }
+
+    if let Some((numerator, denominator)) = token.split_once('/') {
+        let n = numerator.parse::<f64>().ok()?;
+        let d = denominator.parse::<f64>().ok()?;
+        // A denominator of zero is a typo, not an amount.
+        return (d != 0.0).then_some(n / d);
+    }
+
+    token.parse::<f64>().ok()
+}
+
+/// Render a scaled amount the way a recipe writes it.
+///
+/// Fractions rather than decimals for the halves and quarters, because "1 1/2
+/// tsp" is what a measuring spoon is marked in and "1.5 tsp" is not. Anything
+/// that isn't a clean fraction falls back to a trimmed decimal.
+fn format_amount(value: f64) -> String {
+    let rounded = (value * 1000.0).round() / 1000.0;
+    let whole = rounded.trunc();
+    let fraction = rounded - whole;
+
+    // 1/8 is as fine as a kitchen measurement gets; below that, the decimal is
+    // more honest than pretending to a fraction nobody can measure.
+    for (numerator, denominator) in [(1, 2), (1, 3), (2, 3), (1, 4), (3, 4), (1, 8), (3, 8), (5, 8), (7, 8)] {
+        let target = numerator as f64 / denominator as f64;
+        if (fraction - target).abs() < 0.011 {
+            let text = format!("{numerator}/{denominator}");
+            return if whole == 0.0 {
+                text
+            } else {
+                format!("{whole:.0} {text}")
+            };
+        }
+    }
+
+    if fraction.abs() < 0.011 {
+        return format!("{:.0}", rounded);
+    }
+
+    format!("{rounded}")
+}
+
+/// A metric amount, written the way a scale reads it.
+///
+/// Deliberately not `format_amount`: nothing is labelled "1 1/2 kg". Fractions
+/// belong to the cup-and-spoon units a cook measures by hand, decimals to the
+/// units something is weighed in.
+fn format_decimal(value: f64) -> String {
+    let rounded = (value * 100.0).round() / 100.0;
+    if (rounded - rounded.trunc()).abs() < f64::EPSILON {
+        format!("{rounded:.0}")
+    } else {
+        format!("{rounded}")
+    }
+}
+
+/// Promote a scaled amount to the larger unit once it earns one.
+///
+/// 500 g doubled is 1 kg, not 1000 g. Only the metric pairs, and only upward:
+/// these are the two conversions that are exact and that a shopping list
+/// actually benefits from, unlike cups-to-quarts which depends on what is being
+/// measured.
+fn promote_unit(value: f64, unit: &str) -> Option<(f64, &'static str)> {
+    let lower = unit.to_lowercase();
+    match lower.as_str() {
+        "g" | "gram" | "grams" if value >= 1000.0 => Some((value / 1000.0, "kg")),
+        "ml" | "milliliter" | "milliliters" | "millilitre" | "millilitres" if value >= 1000.0 => {
+            Some((value / 1000.0, "l"))
+        }
+        _ => None,
+    }
+}
+
+/// Multiply a quantity string by a whole factor.
+///
+/// Returns the amount as it should read on the shopping list. An amount this
+/// cannot parse — "a pinch", "to taste" — comes back as `2 × a pinch` rather
+/// than being silently left at its single-batch value, because quietly
+/// under-reporting an ingredient is the one outcome worth avoiding: the
+/// household finds out at the stove.
+pub fn scale_quantity(qty: &str, factor: i16) -> String {
+    let qty = qty.trim();
+    if factor <= 1 || qty.is_empty() {
+        return qty.to_string();
+    }
+
+    let tokens: Vec<&str> = qty.split_whitespace().collect();
+
+    // A range ("2-3 tbsp") scales at both ends and stays a range.
+    if let Some(first) = tokens.first() {
+        for dash in ['-', '–'] {
+            if let Some((low, high)) = first.split_once(dash) {
+                if let (Some(low), Some(high)) = (parse_number(low), parse_number(high)) {
+                    let tail = tokens[1..].join(" ");
+                    let scaled = format!(
+                        "{}-{}",
+                        format_amount(low * factor as f64),
+                        format_amount(high * factor as f64)
+                    );
+                    return if tail.is_empty() {
+                        scaled
+                    } else {
+                        format!("{scaled} {tail}")
+                    };
+                }
+            }
+        }
+    }
+
+    // Leading numeric tokens, summed, so a mixed number ("1 1/2") scales as the
+    // single value it represents rather than as two separate amounts.
+    let mut value = 0.0;
+    let mut taken = 0;
+    for token in &tokens {
+        match parse_number(token) {
+            Some(number) => {
+                value += number;
+                taken += 1;
+            }
+            None => break,
+        }
+    }
+
+    if taken == 0 {
+        return format!("{factor} × {qty}");
+    }
+
+    let scaled = value * factor as f64;
+    let tail = tokens[taken..].join(" ");
+
+    // The unit is the first word after the number, when there is one.
+    if let Some(unit) = tokens.get(taken) {
+        if let Some((promoted, better)) = promote_unit(scaled, unit) {
+            let rest = tokens[taken + 1..].join(" ");
+            let head = format!("{} {better}", format_decimal(promoted));
+            return if rest.is_empty() {
+                head
+            } else {
+                format!("{head} {rest}")
+            };
+        }
+    }
+
+    if tail.is_empty() {
+        format_amount(scaled)
+    } else {
+        format!("{} {tail}", format_amount(scaled))
+    }
+}
+
 /// Parse an ISO 8601 duration ("PT1H15M") into whole minutes.
 pub fn parse_iso_duration(value: &str) -> Option<i32> {
     let rest = value.strip_prefix("PT")?;
@@ -155,7 +357,15 @@ fn collect_steps(value: &Value, out: &mut Vec<String>) {
     }
 }
 
-fn category_from(value: Option<&Value>) -> Category {
+/// Guess a category *name* from whatever the site called it.
+///
+/// The names it can produce are the four the hub ships with. Once a household
+/// has renamed or replaced those, an import that guesses "Dessert" against a
+/// library that has no Dessert simply lands in the first category — see
+/// `categories::resolve`. Guessing against the household's own list instead
+/// would mean matching free text to arbitrary names, which is worse than a
+/// wrong guess that takes two taps to fix.
+fn category_from(value: Option<&Value>) -> String {
     let raw = value
         .and_then(|v| match v {
             Value::String(s) => Some(s.clone()),
@@ -166,14 +376,15 @@ fn category_from(value: Option<&Value>) -> Category {
         .to_lowercase();
 
     if raw.contains("dessert") || raw.contains("cake") || raw.contains("sweet") {
-        Category::Dessert
+        "Dessert"
     } else if raw.contains("breakfast") || raw.contains("brunch") {
-        Category::Breakfast
+        "Breakfast"
     } else if raw.contains("vegetarian") || raw.contains("vegan") {
-        Category::Vegetarian
+        "Vegetarian"
     } else {
-        Category::Dinner
+        "Dinner"
     }
+    .to_string()
 }
 
 /// Walk a JSON-LD document looking for the first schema.org/Recipe node.
@@ -316,6 +527,69 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_single_batch_is_left_exactly_as_written() {
+        // Not a no-op worth skipping: every un-doubled night goes through here,
+        // and the amount on the list has to be the recipe's own string, not a
+        // reformatted version of it.
+        assert_eq!(scale_quantity("1 hr 15", 1), "1 hr 15");
+        assert_eq!(scale_quantity("½ tsp", 1), "½ tsp");
+        assert_eq!(scale_quantity("", 2), "");
+    }
+
+    #[test]
+    fn whole_numbers_and_units_double() {
+        assert_eq!(scale_quantity("2 cloves", 2), "4 cloves");
+        assert_eq!(scale_quantity("4 fillets", 2), "8 fillets");
+        assert_eq!(scale_quantity("3 tbsp olive oil", 2), "6 tbsp olive oil");
+        assert_eq!(scale_quantity("2", 3), "6");
+    }
+
+    #[test]
+    fn fractions_stay_fractions() {
+        // A cook measures in halves and quarters; 0.5 tsp is not a marking on
+        // any spoon in the drawer.
+        assert_eq!(scale_quantity("1/2 cup", 2), "1 cup");
+        assert_eq!(scale_quantity("1/4 tsp", 2), "1/2 tsp");
+        assert_eq!(scale_quantity("3/4 cup", 2), "1 1/2 cup");
+        assert_eq!(scale_quantity("½ tsp", 3), "1 1/2 tsp");
+        assert_eq!(scale_quantity("1/3 cup", 2), "2/3 cup");
+    }
+
+    #[test]
+    fn a_mixed_number_scales_as_one_amount() {
+        // "1 1/2" is one and a half, not one *and* a half — summing the leading
+        // tokens is what keeps it from doubling to "2 1 cups".
+        assert_eq!(scale_quantity("1 1/2 cups", 2), "3 cups");
+        assert_eq!(scale_quantity("1½ cups", 2), "3 cups");
+    }
+
+    #[test]
+    fn grams_and_millilitres_are_promoted_once_they_earn_it() {
+        assert_eq!(scale_quantity("500 g", 2), "1 kg");
+        assert_eq!(scale_quantity("750 g flour", 2), "1.5 kg flour");
+        assert_eq!(scale_quantity("400 ml", 3), "1.2 l");
+        // Below the threshold nothing moves, and pounds are left alone because
+        // the conversion upward is not exact.
+        assert_eq!(scale_quantity("200 g", 2), "400 g");
+        assert_eq!(scale_quantity("8 oz", 2), "16 oz");
+    }
+
+    #[test]
+    fn a_range_scales_at_both_ends() {
+        assert_eq!(scale_quantity("2-3 tbsp", 2), "4-6 tbsp");
+        assert_eq!(scale_quantity("1–2 cloves", 2), "2-4 cloves");
+    }
+
+    #[test]
+    fn an_amount_with_no_number_is_multiplied_out_loud() {
+        // The alternative is showing "a pinch" for a doubled batch, which reads
+        // as a correct amount and is not one. Better to hand the arithmetic
+        // back to the human than to quietly under-report it.
+        assert_eq!(scale_quantity("a pinch", 2), "2 × a pinch");
+        assert_eq!(scale_quantity("to taste", 2), "2 × to taste");
+    }
+
+    #[test]
     fn splits_an_amount_from_the_ingredient() {
         let cases = [
             ("500 g potato gnocchi", "500 g", "potato gnocchi"),
@@ -401,10 +675,10 @@ mod tests {
         let dessert = json!({ "recipeCategory": ["Dessert", "Baking"] });
         let breakfast = json!({ "recipeCategory": "Brunch" });
 
-        assert_eq!(category_from(vegetarian.get("recipeCategory")), Category::Vegetarian);
-        assert_eq!(category_from(dessert.get("recipeCategory")), Category::Dessert);
-        assert_eq!(category_from(breakfast.get("recipeCategory")), Category::Breakfast);
-        assert_eq!(category_from(None), Category::Dinner);
+        assert_eq!(category_from(vegetarian.get("recipeCategory")), "Vegetarian");
+        assert_eq!(category_from(dessert.get("recipeCategory")), "Dessert");
+        assert_eq!(category_from(breakfast.get("recipeCategory")), "Breakfast");
+        assert_eq!(category_from(None), "Dinner");
     }
 
     use serde_json::json;

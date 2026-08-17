@@ -1,7 +1,23 @@
 /** Wire types, mirroring the Rust models exactly. */
 
-export type Category = 'Dinner' | 'Breakfast' | 'Vegetarian' | 'Dessert';
+/** A category name. Open — the household defines its own, so this is a plain
+ *  string and the gradient for it is looked up from `Bootstrap.categories`. */
+export type Category = string;
 export type AisleKey = 'produce' | 'meat' | 'cold' | 'pantry' | 'misc';
+
+/** A category as the household defined it, carrying the gradient its cards are
+ *  painted with. There is no photography in this product, so these two colours
+ *  are the only thing distinguishing one recipe card from another. */
+export interface RecipeCategory {
+  id: string;
+  name: string;
+  color_from: string;
+  color_to: string;
+  position: number;
+}
+
+/** Which meal on a day. Dinner is the plan's spine; lunch is the prep cook. */
+export type MealSlot = 'dinner' | 'lunch';
 
 export interface Member {
   id: string;
@@ -20,6 +36,8 @@ export interface Ingredient {
 export interface Recipe {
   id: string;
   title: string;
+  category_id: string;
+  /** The category's name, joined server-side. */
   category: Category;
   time_label: string;
   time_minutes: number | null;
@@ -43,6 +61,10 @@ export interface RecipeDraft {
   ingredients: Ingredient[];
   steps: string[];
   source_url?: string | null;
+  /** Raw typed lines ("500 g potato gnocchi"). The server splits the amount
+   *  from the name, so the browser never parses a quantity. Ignored when
+   *  `ingredients` is non-empty, which is how an import keeps what it read. */
+  ingredient_lines?: string[];
 }
 
 export interface ImportPreview extends RecipeDraft {
@@ -53,10 +75,16 @@ export interface ImportPreview extends RecipeDraft {
 export interface PlanEntry {
   /** ISO date, `YYYY-MM-DD`. */
   day: string;
-  kind: 'cook' | 'out';
+  slot: MealSlot;
+  /** `leftovers` counts as planned and contributes nothing to the shopping
+   *  list — the same bargain `out` makes. */
+  kind: 'cook' | 'out' | 'leftovers';
   recipe_id: string | null;
   /** Null with kind `out` renders as the generic "Eating out". */
   out_place: string | null;
+  /** How many times over the recipe is being made. 1 unless someone ticked the
+   *  double batch, in which case the shopping list has already multiplied. */
+  batch: number;
 }
 
 export interface ListItem {
@@ -135,6 +163,7 @@ export interface AisleInfo {
 export interface Bootstrap {
   members: Member[];
   recipes: Recipe[];
+  categories: RecipeCategory[];
   plan: PlanEntry[];
   shopping: ShoppingList;
   events: CalendarEvent[];

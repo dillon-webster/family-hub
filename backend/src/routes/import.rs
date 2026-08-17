@@ -26,6 +26,18 @@ pub struct LinkInput {
     pub url: String,
 }
 
+/// The household's category names, for the schema the model's reply is
+/// constrained to. Read per request rather than cached: adding a category and
+/// immediately scanning a recipe into it is a completely reasonable thing to
+/// do, and this is one small query against a table with a handful of rows.
+async fn category_names(state: &AppState) -> AppResult<Vec<String>> {
+    Ok(super::categories::load_all(&state.db)
+        .await?
+        .into_iter()
+        .map(|category| category.name)
+        .collect())
+}
+
 /// Read a recipe from a link.
 ///
 /// Structured data first: when a site publishes schema.org/Recipe the result is
@@ -75,7 +87,7 @@ pub async fn from_link(
         api_key,
         model: &state.config.anthropic_model,
     }
-    .read_text(&text, url)
+    .read_text(&text, url, &category_names(&state).await?)
     .await
     .map_err(|e| AppError::Upstream(e.to_string()))?;
 
@@ -204,7 +216,7 @@ pub async fn from_scan(
         api_key,
         model: &state.config.anthropic_model,
     }
-    .read_images(&pages)
+    .read_images(&pages, &category_names(&state).await?)
     .await
     .map_err(|e| AppError::Upstream(e.to_string()))?;
 

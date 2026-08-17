@@ -33,18 +33,22 @@ pub struct ShoppingList {
 pub async fn build_for_week(db: &PgPool, week_start: NaiveDate) -> AppResult<ShoppingList> {
     let week_end = week_start + chrono::Duration::days(6);
 
-    let planned_ids = plan::cooked_recipe_ids(db, week_start, week_end).await?;
+    let planned_meals = plan::cooked_in_range(db, week_start, week_end).await?;
     let library = recipes::load_all(db).await?;
 
-    // Follow plan order, and keep a repeated recipe listed once: cooking the
-    // same dinner twice does not double the shopping, it just means two meals
-    // draw on it.
+    // One entry per planned meal, in plan order. The merge in `shopping::build`
+    // is what collapses a recipe cooked twice into a single line reading
+    // "· 2 meals" — deduplicating here instead would lose that count. Two
+    // nights of the same dinner at different batch sizes land as two amounts on
+    // one line, which is the same bargain the list already makes everywhere
+    // else: list the amounts, never sum them.
     let mut planned: Vec<PlannedRecipe> = Vec::new();
-    for id in &planned_ids {
+    for (id, batch) in &planned_meals {
         if let Some(recipe) = library.iter().find(|r| r.row.id == *id) {
             planned.push(PlannedRecipe {
                 title: recipe.row.title.clone(),
                 ingredients: recipe.ingredients.clone(),
+                batch: *batch,
             });
         }
     }

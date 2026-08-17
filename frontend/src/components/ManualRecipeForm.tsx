@@ -1,10 +1,13 @@
 import { useState } from 'react';
 
-import { CATEGORIES, api } from '../api/client';
-import type { Category } from '../api/types';
+import { api } from '../api/client';
+import { useStore } from '../api/store';
+import type { Recipe } from '../api/types';
 
 /**
- * Typing a recipe in by hand — the index-card route.
+ * Typing a recipe in by hand — the index-card route — and editing one already
+ * in the library. The same form, because they are the same decisions; only the
+ * verb on the button changes.
  *
  * Ingredients go in as plain lines ("500 g potato gnocchi"); the server splits
  * the amount from the name using the same parser the link importer uses, so
@@ -13,16 +16,30 @@ import type { Category } from '../api/types';
 export function ManualRecipeForm({
   onSaved,
   theme = 'dark',
+  /** Present when editing. Absent is the blank form. */
+  recipe,
 }: {
   onSaved: () => void | Promise<void>;
   theme?: 'dark' | 'light';
+  recipe?: Recipe;
 }) {
-  const [title, setTitle] = useState('');
-  const [timeLabel, setTimeLabel] = useState('');
-  const [serves, setServes] = useState('');
-  const [category, setCategory] = useState<Category>('Dinner');
-  const [ingredients, setIngredients] = useState('');
-  const [steps, setSteps] = useState('');
+  const { categories } = useStore();
+
+  const [title, setTitle] = useState(recipe?.title ?? '');
+  const [timeLabel, setTimeLabel] = useState(recipe?.time_label ?? '');
+  const [serves, setServes] = useState(recipe?.serves_label ?? '');
+  const [blurb, setBlurb] = useState(recipe?.blurb ?? '');
+  const [category, setCategory] = useState(
+    recipe?.category ?? categories[0]?.name ?? 'Dinner',
+  );
+  const [ingredients, setIngredients] = useState(
+    // Back to the lines they were typed as, so the round trip through the
+    // splitter is invisible to whoever is editing.
+    (recipe?.ingredients ?? [])
+      .map((item) => [item.qty, item.name].filter(Boolean).join(' '))
+      .join('\n'),
+  );
+  const [steps, setSteps] = useState((recipe?.steps ?? []).join('\n'));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,25 +63,27 @@ export function ManualRecipeForm({
     setBusy(true);
     setError(null);
     try {
-      const minutes = parseMinutes(timeLabel);
-      await api.saveRecipe(
-        {
-          title: title.trim(),
-          category,
-          time_label: timeLabel.trim(),
-          time_minutes: minutes,
-          serves_label: serves.trim(),
-          blurb: '',
-          ingredients: [],
-          steps: steps
-            .split('\n')
-            .map((line) => line.trim())
-            .filter(Boolean),
-          // Sent alongside the empty `ingredients` so the server splits them.
-          ...({ ingredient_lines: ingredients.split('\n') } as object),
-        },
-        'manual',
-      );
+      const draft = {
+        title: title.trim(),
+        category,
+        time_label: timeLabel.trim(),
+        time_minutes: parseMinutes(timeLabel),
+        serves_label: serves.trim(),
+        blurb: blurb.trim(),
+        // Sent alongside the empty `ingredients` so the server splits them.
+        ingredients: [],
+        ingredient_lines: ingredients.split('\n'),
+        steps: steps
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean),
+      };
+
+      if (recipe) {
+        await api.updateRecipe(recipe.id, draft);
+      } else {
+        await api.saveRecipe(draft, 'manual');
+      }
       await onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save that recipe.');
@@ -121,14 +140,14 @@ export function ManualRecipeForm({
           Category
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {CATEGORIES.map((option) => {
-            const active = category === option;
+          {categories.map((option) => {
+            const active = category === option.name;
             return (
               <button
-                key={option}
+                key={option.id}
                 type="button"
                 className="pressable"
-                onClick={() => setCategory(option)}
+                onClick={() => setCategory(option.name)}
                 style={
                   {
                     height: 48,
@@ -142,12 +161,14 @@ export function ManualRecipeForm({
                     alignItems: 'center',
                     fontSize: 16,
                     fontWeight: 600,
-                    '--bg': active ? '#C8553D' : 'transparent',
-                    '--bg-press': active ? '#A23F29' : dark ? '#2E2823' : '#F6EDDE',
+                    // The category's own colour, so picking one shows what the
+                    // card will look like rather than describing it.
+                    '--bg': active ? option.color_from : 'transparent',
+                    '--bg-press': active ? option.color_to : dark ? '#2E2823' : '#F6EDDE',
                   } as React.CSSProperties
                 }
               >
-                {option}
+                {option.name}
               </button>
             );
           })}
@@ -180,6 +201,23 @@ export function ManualRecipeForm({
         />
       </div>
 
+      {/* Only when editing: the blurb is written by the importers and shown on
+          the wall, so it is worth being able to fix, but not worth asking for
+          on the way in. */}
+      {recipe && (
+        <div>
+          <div className="overline" style={label}>
+            One line for the wall display
+          </div>
+          <input
+            value={blurb}
+            onChange={(event) => setBlurb(event.target.value)}
+            placeholder="Crisped in nutty brown butter and sage."
+            style={field}
+          />
+        </div>
+      )}
+
       {error && <div style={{ fontSize: 15, color: '#C8553D', lineHeight: 1.5 }}>{error}</div>}
 
       <button
@@ -203,7 +241,7 @@ export function ManualRecipeForm({
           } as React.CSSProperties
         }
       >
-        {busy ? 'Saving…' : 'Save to library'}
+        {busy ? 'Saving…' : recipe ? 'Save changes' : 'Save to library'}
       </button>
     </div>
   );

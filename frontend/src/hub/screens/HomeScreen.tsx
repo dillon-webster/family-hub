@@ -1,5 +1,10 @@
 import { useStore } from '../../api/store';
-import { CATEGORY_COLOR, CATEGORY_FIELD, OUT_COLOR, OUT_FIELD } from '../../design/category';
+import {
+  LEFTOVERS_COLOR,
+  LEFTOVERS_FIELD,
+  OUT_COLOR,
+  OUT_FIELD,
+} from '../../design/category';
 import {
   addDays,
   clockTime,
@@ -18,17 +23,18 @@ import type { HubScreen } from '../HubApp';
 interface Props {
   onGo: (screen: HubScreen) => void;
   onPlanDay: (day: string) => void;
-  onOpenRecipe: (id: string) => void;
+  onOpenRecipe: (id: string, batch?: number) => void;
 }
 
 export function HomeScreen({ onGo, onPlanDay, onOpenRecipe }: Props) {
-  const { data, now, entryFor, recipeFor } = useStore();
+  const { data, now, entryFor, recipeFor, categoryField, categoryColor } = useStore();
   if (!data) return null;
 
   const today = new Date();
   const todayEntry = entryFor(today);
   const tonight = recipeFor(today);
   const eatingOut = todayEntry?.kind === 'out';
+  const leftovers = todayEntry?.kind === 'leftovers';
 
   const members = new Map(data.members.map((m) => [m.id, m]));
   const todaysEvents = data.events
@@ -42,10 +48,12 @@ export function HomeScreen({ onGo, onPlanDay, onOpenRecipe }: Props) {
   const upcoming = Array.from({ length: 4 }, (_, index) => addDays(today, index + 1));
 
   const field = tonight
-    ? CATEGORY_FIELD[tonight.category]
+    ? categoryField(tonight.category)
     : eatingOut
       ? OUT_FIELD
-      : 'linear-gradient(160deg, #3A3129 0%, #241F1B 100%)';
+      : leftovers
+        ? LEFTOVERS_FIELD
+        : 'linear-gradient(160deg, #3A3129 0%, #241F1B 100%)';
 
   return (
     <div
@@ -135,7 +143,13 @@ export function HomeScreen({ onGo, onPlanDay, onOpenRecipe }: Props) {
               }}
             >
               <div className="overline" style={{ color: 'rgba(255,248,242,0.78)' }}>
-                {tonight ? tonight.category : eatingOut ? 'Eating out' : 'Dinner'}
+                {tonight
+                  ? tonight.category
+                  : eatingOut
+                    ? 'Eating out'
+                    : leftovers
+                      ? 'Leftovers'
+                      : 'Dinner'}
               </div>
               {tonight && (
                 <div className="mono" style={{ fontSize: 15, color: '#FFF8F2', marginTop: 6 }}>
@@ -164,14 +178,18 @@ export function HomeScreen({ onGo, onPlanDay, onOpenRecipe }: Props) {
                     ? tonight.title
                     : eatingOut
                       ? (todayEntry?.out_place ?? 'Eating out')
-                      : 'Nothing planned yet'}
+                      : leftovers
+                        ? 'Leftovers'
+                        : 'Nothing planned yet'}
                 </div>
                 <div style={{ fontSize: 17, color: '#BFB0A0', marginTop: 8 }}>
                   {tonight
                     ? tonight.blurb
                     : eatingOut
                       ? 'Nothing to cook and nothing on the shopping list.'
-                      : 'Pick something from the library and it will show up here.'}
+                      : leftovers
+                        ? 'Whatever is in the fridge. Nothing to shop for.'
+                        : 'Pick something from the library and it will show up here.'}
                 </div>
               </div>
 
@@ -180,7 +198,7 @@ export function HomeScreen({ onGo, onPlanDay, onOpenRecipe }: Props) {
                   <button
                     type="button"
                     className="pressable"
-                    onClick={() => onOpenRecipe(tonight.id)}
+                    onClick={() => onOpenRecipe(tonight.id, todayEntry?.batch ?? 1)}
                     style={
                       {
                         height: 52,
@@ -263,7 +281,8 @@ export function HomeScreen({ onGo, onPlanDay, onOpenRecipe }: Props) {
                 const recipe = recipeFor(day);
                 const entry = entryFor(day);
                 const out = entry?.kind === 'out';
-                const planned = Boolean(recipe || out);
+                const over = entry?.kind === 'leftovers';
+                const planned = Boolean(recipe || out || over);
 
                 return (
                   <button
@@ -271,7 +290,7 @@ export function HomeScreen({ onGo, onPlanDay, onOpenRecipe }: Props) {
                     type="button"
                     className="pressable"
                     onClick={() =>
-                      recipe ? onOpenRecipe(recipe.id) : onPlanDay(isoDate(day))
+                      recipe ? onOpenRecipe(recipe.id, entry?.batch ?? 1) : onPlanDay(isoDate(day))
                     }
                     style={
                       {
@@ -298,10 +317,12 @@ export function HomeScreen({ onGo, onPlanDay, onOpenRecipe }: Props) {
                         height: 6,
                         borderRadius: 3,
                         background: recipe
-                          ? CATEGORY_COLOR[recipe.category]
+                          ? categoryColor(recipe.category)
                           : out
                             ? OUT_COLOR
-                            : 'rgba(252,247,239,0.14)',
+                            : over
+                              ? LEFTOVERS_COLOR
+                              : 'rgba(252,247,239,0.14)',
                       }}
                     />
                     <div
@@ -316,7 +337,9 @@ export function HomeScreen({ onGo, onPlanDay, onOpenRecipe }: Props) {
                         ? recipe.title
                         : out
                           ? (entry?.out_place ?? 'Eating out')
-                          : 'Nothing planned yet'}
+                          : over
+                            ? 'Leftovers'
+                            : 'Nothing planned yet'}
                     </div>
                   </button>
                 );

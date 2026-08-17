@@ -24,13 +24,25 @@ export function HubApp() {
   const [screen, setScreen] = useState<HubScreen>('home');
   /** Set when Home sends you to Meals to fill a specific empty night. */
   const [assignDay, setAssignDay] = useState<string | null>(null);
-  /** Set when a card sends you to Recipes with one already open. */
-  const [openRecipe, setOpenRecipe] = useState<string | null>(null);
+  /** Set when a card sends you to Recipes with one already open. The batch
+   *  rides along so a recipe opened from a doubled night shows the amounts
+   *  actually being cooked rather than the ones as written. */
+  const [openRecipe, setOpenRecipe] = useState<{ id: string; batch: number } | null>(null);
 
+  /**
+   * The rail always takes you to the top of a section.
+   *
+   * These used to be cleared only when the destination differed, which made
+   * tapping the section you were already in do nothing visible: the open recipe
+   * covers the whole content area, so "Recipes" while reading one left you
+   * reading it, and "Meals" with the assign panel up left the panel up. Nothing
+   * else drives navigation through here — Home opens a recipe by setting both
+   * pieces of state directly — so clearing unconditionally is safe.
+   */
   const go = (next: HubScreen) => {
     setScreen(next);
-    if (next !== 'plan') setAssignDay(null);
-    if (next !== 'recipes') setOpenRecipe(null);
+    setAssignDay(null);
+    setOpenRecipe(null);
   };
 
   if (loading && !data) {
@@ -201,8 +213,8 @@ export function HubApp() {
               setAssignDay(day);
               setScreen('plan');
             }}
-            onOpenRecipe={(id) => {
-              setOpenRecipe(id);
+            onOpenRecipe={(id, batch = 1) => {
+              setOpenRecipe({ id, batch });
               setScreen('recipes');
             }}
           />
@@ -211,8 +223,8 @@ export function HubApp() {
           <MealsScreen
             assignDay={assignDay}
             setAssignDay={setAssignDay}
-            onOpenRecipe={(id) => {
-              setOpenRecipe(id);
+            onOpenRecipe={(id, batch = 1) => {
+              setOpenRecipe({ id, batch });
               setScreen('recipes');
             }}
           />

@@ -1,32 +1,38 @@
-import type { Category } from '../api/types';
+import type { RecipeCategory } from '../api/types';
 
 /**
  * There is no photography in this product. Every recipe is represented by a
- * colour field keyed to its category, which is why the category set is closed
- * and why these two maps live next to the tokens rather than in a component.
+ * colour field keyed to its category, which is why a category owns two colours
+ * rather than just a name.
+ *
+ * These used to be two hard-coded maps over a closed set of four. The set is
+ * the household's own now, so the colours travel with the data and these are
+ * the functions that turn a category into the gradient the design specifies —
+ * still 160deg, still two stops, still the only thing distinguishing one card
+ * from another across a kitchen.
  */
 
-export const CATEGORY_FIELD: Record<Category, string> = {
-  Dinner: 'linear-gradient(160deg, #C8553D 0%, #8F3626 100%)',
-  Breakfast: 'linear-gradient(160deg, #D9962B 0%, #9A6414 100%)',
-  Vegetarian: 'linear-gradient(160deg, #6E8B57 0%, #455A34 100%)',
-  Dessert: 'linear-gradient(160deg, #7C4E6B 0%, #4E2E43 100%)',
-};
+/** The 160deg two-stop field a category paints its cards with. */
+export const fieldOf = (category: Pick<RecipeCategory, 'color_from' | 'color_to'>) =>
+  `linear-gradient(160deg, ${category.color_from} 0%, ${category.color_to} 100%)`;
 
-export const CATEGORY_COLOR: Record<Category, string> = {
-  Dinner: '#C8553D',
-  Breakfast: '#D9962B',
-  Vegetarian: '#6E8B57',
-  Dessert: '#7C4E6B',
-};
+/**
+ * The fallback for a category that cannot be found.
+ *
+ * Reachable for about one frame: a recipe rendered from a cached payload while
+ * the category list is still loading, or immediately after another surface
+ * deleted a category. A neutral field keeps the card looking like a card rather
+ * than collapsing to a transparent hole, which is what an undefined gradient
+ * would do.
+ */
+export const UNKNOWN_FIELD = 'linear-gradient(160deg, #6B6058 0%, #443C36 100%)';
+export const UNKNOWN_COLOR = '#6B6058';
 
 /** The taupe field for a night nobody is cooking. */
 export const OUT_FIELD = 'linear-gradient(160deg, #8A7B6B 0%, #5A4E43 100%)';
 export const OUT_COLOR = '#8A7B6B';
 
-/** The three buckets on the household board, with the colour of each. */
-export const BUCKETS = [
-  { name: 'Short-term', color: '#E37A57', phoneColor: '#C8553D' },
-  { name: 'Medium-term', color: '#E3A85C', phoneColor: '#D9962B' },
-  { name: 'Long-term', color: '#93B278', phoneColor: '#6E8B57' },
-] as const;
+/** Leftovers: cooler and dimmer than eating out, so the two read apart at a
+ *  glance on the plan without either one competing with a real dinner. */
+export const LEFTOVERS_FIELD = 'linear-gradient(160deg, #6F7B82 0%, #414C52 100%)';
+export const LEFTOVERS_COLOR = '#6F7B82';

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Camera, CalendarDays, Check, ShoppingCart } from 'lucide-react';
+import { Camera, CalendarDays, CalendarClock, Check, ShoppingCart } from 'lucide-react';
 
 import { useStore } from '../api/store';
 import { ListScreen } from './ListScreen';
 import { WeekScreen } from './WeekScreen';
+import { CalendarScreen } from './CalendarScreen';
 import { CaptureScreen } from './CaptureScreen';
 
-export type PhoneTab = 'list' | 'plan' | 'capture';
+export type PhoneTab = 'list' | 'plan' | 'cal' | 'capture';
 
 /**
  * The phone surface fills the device rather than drawing the prototype's
@@ -87,6 +88,7 @@ export function PhoneApp() {
     >
       {tab === 'list' && <ListScreen flash={flash} />}
       {tab === 'plan' && <WeekScreen flash={flash} />}
+      {tab === 'cal' && <CalendarScreen flash={flash} />}
       {tab === 'capture' && <CaptureScreen flash={flash} onDone={() => setTab('plan')} />}
 
       {toast && (
@@ -156,7 +158,7 @@ export function PhoneApp() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-around',
-          padding: '0 10px',
+          padding: '0 4px',
           boxShadow: '0 12px 28px rgba(67,47,28,0.14)',
         }}
       >
@@ -197,6 +199,13 @@ export function PhoneApp() {
           onClick={() => setTab('plan')}
           icon={<CalendarDays size={24} strokeWidth={2} />}
         />
+
+        <TabButton
+          label="Calendar"
+          active={tab === 'cal'}
+          onClick={() => setTab('cal')}
+          icon={<CalendarClock size={24} strokeWidth={2} />}
+        />
       </nav>
     </div>
   );
@@ -219,7 +228,7 @@ function TabButton({
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       style={{
-        width: 88,
+        width: 74,
         height: 60,
         borderRadius: 18,
         display: 'flex',

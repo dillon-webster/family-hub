@@ -24,15 +24,34 @@ function mondayOf(date: Date): string {
   return `${result.getFullYear()}-${month}-${day}`;
 }
 
-/** Leave the week we are about to assert on in a known-empty state. */
+/** `YYYY-MM-DD` in the browser's own timezone, as the app computes it. */
+function iso(date: Date): string {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+/** Leave the week we are about to assert on in a known-empty state — both
+ *  meals, since a lunch left behind would still put ingredients on the list. */
 async function clearWeek(request: import('@playwright/test').APIRequestContext) {
   const monday = new Date(`${mondayOf(new Date())}T12:00:00`);
   for (let index = 0; index < 7; index += 1) {
     const day = new Date(monday);
     day.setDate(day.getDate() + index);
-    const iso = `${day.getFullYear()}-${`${day.getMonth() + 1}`.padStart(2, '0')}-${`${day.getDate()}`.padStart(2, '0')}`;
-    await request.delete(`${BASE}/api/plan/${iso}`);
+    await request.delete(`${BASE}/api/plan/${iso(day)}`);
+    await request.delete(`${BASE}/api/plan/${iso(day)}?slot=lunch`);
   }
+}
+
+/**
+ * Today's column on the meal plan.
+ *
+ * The plan is a scrolling strip of seven weeks, not a seven-day grid, so
+ * "the first empty night on the page" means a day three weeks in the past.
+ * Every assertion about the current week has to name the day it means.
+ */
+function today(page: import('@playwright/test').Page) {
+  return page.locator(`[data-day="${iso(new Date())}"]`);
 }
 
 test.describe('kitchen display', () => {
@@ -75,8 +94,8 @@ test.describe('kitchen display', () => {
     await page.goto(BASE);
     await page.getByRole('button', { name: 'Meals' }).click();
 
-    // Fill the first empty night from the assign panel.
-    await page.getByRole('button').filter({ hasText: 'Tap to add' }).first().click();
+    // Fill tonight from the assign panel.
+    await today(page).getByRole('button').filter({ hasText: 'Tap to add' }).click();
     const panel = page.getByRole('dialog');
     await expect(panel.getByText('Assign dinner')).toBeVisible();
     await panel.getByRole('button').filter({ hasText: 'Brown butter gnocchi' }).click();
@@ -91,12 +110,83 @@ test.describe('kitchen display', () => {
     await clearWeek(request);
   });
 
+  test('a double batch sticks, and shows itself when you come back', async ({ page, request }) => {
+    // Reported from the kitchen as "I don't think it saves when I click double
+    // batch", and it didn't: the checkbox never read the stored value, so a
+    // doubled night showed it unticked and ticking it changed nothing unless
+    // you also re-tapped the recipe underneath.
+    await clearWeek(request);
+    await page.goto(BASE);
+    await page.getByRole('button', { name: 'Meals' }).click();
+
+    await today(page).getByRole('button').filter({ hasText: 'Tap to add' }).click();
+    const panel = page.getByRole('dialog');
+    await panel.getByRole('button', { name: /Double batch/ }).click();
+    await panel.getByRole('button').filter({ hasText: 'Brown butter gnocchi' }).click();
+
+    // On the plan tile, and doubled on the list.
+    await expect(today(page).getByText('×2')).toBeVisible();
+    await page.getByRole('button', { name: 'Shopping list', exact: true }).click();
+    await expect(page.getByText('1 kg')).toBeVisible();
+    await page.getByRole('button', { name: 'Close' }).click();
+
+    // Reopening the night shows it already ticked — the half that was broken.
+    await today(page).getByRole('button').filter({ hasText: 'Brown butter gnocchi' }).click();
+    await expect(panel.getByRole('button', { name: /Double batch/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    // And unticking it saves on the spot, without re-picking the recipe.
+    await panel.getByRole('button', { name: /Double batch/ }).click();
+    await expect(panel.getByRole('button', { name: /Double batch/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    await expect(panel.getByText('×2 batch')).toHaveCount(0);
+    await panel.getByRole('button', { name: 'Close' }).click();
+    await expect(today(page).getByText('×2')).toHaveCount(0);
+
+    await clearWeek(request);
+  });
+
+  test('planning a dinner sends an approved list back for review', async ({ page, request }) => {
+    // The household plans a week at a time, so ingredients that arrive after
+    // someone has signed the list off must not join it unannounced.
+    await clearWeek(request);
+    await page.goto(BASE);
+    await page.getByRole('button', { name: 'Meals' }).click();
+
+    await today(page).getByRole('button').filter({ hasText: 'Tap to add' }).click();
+    await page.getByRole('dialog').getByRole('button').filter({ hasText: 'Brown butter gnocchi' }).click();
+
+    await page.getByRole('button', { name: 'Shopping list', exact: true }).click();
+    await page.getByRole('button', { name: /Add \d+ to the list/ }).click();
+    await expect(page.getByText('Check before adding')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Close' }).click();
+
+    // A second dinner reopens the week.
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    await page
+      .locator(`[data-day="${iso(tomorrow)}"]`)
+      .getByRole('button')
+      .filter({ hasText: 'Tap to add' })
+      .click();
+    await page.getByRole('dialog').getByRole('button').filter({ hasText: 'Miso mushroom ramen' }).click();
+
+    await page.getByRole('button', { name: 'Shopping list', exact: true }).click();
+    await expect(page.getByText('Check before adding')).toBeVisible();
+
+    await clearWeek(request);
+  });
+
   test('marking a night as eating out contributes nothing to the list', async ({ page, request }) => {
     await clearWeek(request);
     await page.goto(BASE);
     await page.getByRole('button', { name: 'Meals' }).click();
 
-    await page.getByRole('button').filter({ hasText: 'Tap to add' }).first().click();
+    await today(page).getByRole('button').filter({ hasText: 'Tap to add' }).click();
     await page.getByRole('dialog').getByRole('button').filter({ hasText: 'Going out to eat' }).click();
 
     await expect(page.getByText('1 of 7 dinners planned')).toBeVisible();
@@ -121,11 +211,11 @@ test.describe('phone companion', () => {
 
     await expect(page.getByRole('heading', { name: 'Shopping list' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Week' }).click();
+    await page.getByRole('button', { name: 'Week', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'This week' })).toBeVisible();
     await expect(page.getByText('of 7 planned')).toBeVisible();
 
-    await page.getByRole('button', { name: 'List' }).click();
+    await page.getByRole('button', { name: 'List', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Shopping list' })).toBeVisible();
   });
 
@@ -140,7 +230,7 @@ test.describe('phone companion', () => {
     await expect(hub.getByText('0 of 7 dinners planned')).toBeVisible();
 
     await page.goto(`${BASE}/phone`);
-    await page.getByRole('button', { name: 'Week' }).click();
+    await page.getByRole('button', { name: 'Week', exact: true }).click();
     await page.getByRole('button').filter({ hasText: 'Add a dinner' }).first().click();
     await page.getByRole('button').filter({ hasText: 'Miso mushroom ramen' }).first().click();
 

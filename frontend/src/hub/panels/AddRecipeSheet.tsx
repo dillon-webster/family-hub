@@ -4,7 +4,6 @@ import { Link2, PencilLine, ScanLine } from 'lucide-react';
 import { api } from '../../api/client';
 import { useStore } from '../../api/store';
 import type { Category, ImportPreview } from '../../api/types';
-import { CATEGORY_FIELD } from '../../design/category';
 import { CameraFrame } from '../../components/CameraFrame';
 import { ManualRecipeForm } from '../../components/ManualRecipeForm';
 import { CloseButton } from './AssignPanel';
@@ -20,7 +19,7 @@ const TITLES: Record<Mode, string> = {
 };
 
 export function AddRecipeSheet({ onClose }: { onClose: () => void }) {
-  const { data, refresh } = useStore();
+  const { data, refresh, categoryField } = useStore();
   const [mode, setMode] = useState<Mode>('menu');
   const [url, setUrl] = useState('');
   const [busy, setBusy] = useState(false);
@@ -198,7 +197,7 @@ export function AddRecipeSheet({ onClose }: { onClose: () => void }) {
             {found.method === 'structured' ? 'Recipe found' : 'Recipe read'}
           </div>
           <div className="scroll-none" style={{ background: '#2E2823', borderRadius: 20, overflow: 'hidden', flex: '0 0 auto' }}>
-            <div style={{ height: 110, background: CATEGORY_FIELD[found.category] }} />
+            <div style={{ height: 110, background: categoryField(found.category) }} />
             <div style={{ padding: 18 }}>
               <div className="serif" style={{ fontSize: 26, color: '#FAF3E9', lineHeight: 1.15 }}>
                 {found.title}

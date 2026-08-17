@@ -1,4 +1,5 @@
 pub mod calendar;
+pub mod categories;
 pub mod import;
 pub mod members;
 pub mod out_spots;
@@ -16,7 +17,7 @@ use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::error::AppResult;
-use crate::models::{CalendarEvent, Member, OutSpot, PlanEntry, Recipe, Task};
+use crate::models::{CalendarEvent, Member, OutSpot, PlanEntry, Recipe, RecipeCategory, Task};
 use crate::shopping::Aisle;
 use crate::state::AppState;
 
@@ -28,6 +29,10 @@ use crate::state::AppState;
 pub struct Bootstrap {
     pub members: Vec<Member>,
     pub recipes: Vec<Recipe>,
+    /// The household's categories, with the gradient each one paints its cards
+    /// with. Sent here rather than hard-coded in the frontend, which is what
+    /// made the set closed in the first place.
+    pub categories: Vec<RecipeCategory>,
     pub plan: Vec<PlanEntry>,
     pub shopping: shopping::ShoppingList,
     pub events: Vec<CalendarEvent>,
@@ -64,12 +69,16 @@ pub async fn bootstrap(
 ) -> AppResult<Json<Bootstrap>> {
     let week_end = query.week_start + Duration::days(6);
 
-    // The plan comes back wider than the week on screen. Home's "rest of the
-    // week" looks four days past today, which spills into next week from
-    // Thursday onward — fetching only Mon–Sun would leave those cards saying
-    // "nothing planned yet" for dinners that are, in fact, planned.
-    let plan_from = query.week_start - Duration::days(1);
-    let plan_to = query.week_start + Duration::days(13);
+    // The plan comes back much wider than the week on screen, for two reasons.
+    // Home's "rest of the week" looks four days past today, which spills into
+    // next week from Thursday onward — fetching only Mon–Sun would leave those
+    // cards saying "nothing planned yet" for dinners that are, in fact,
+    // planned. And the meal plan is a strip you scroll rather than a week you
+    // page, so days well either side of the anchor are on screen the moment
+    // someone flicks it. Narrowing this is how planned dinners silently turn
+    // into empty nights.
+    let plan_from = query.week_start - Duration::days(21);
+    let plan_to = query.week_start + Duration::days(27);
 
     // A generous default window: the client filters to the day columns it is
     // drawing, and this covers every timezone the house could be in.
@@ -88,6 +97,7 @@ pub async fn bootstrap(
     Ok(Json(Bootstrap {
         members: members::list(&state.db).await?,
         recipes: recipes::load_all(&state.db).await?,
+        categories: categories::load_all(&state.db).await?,
         plan: plan::load_range(&state.db, plan_from, plan_to).await?,
         shopping: shopping::build_for_week(&state.db, query.week_start).await?,
         events: calendar::load_range(&state.db, from, to).await?,
@@ -137,6 +147,15 @@ pub fn api_router() -> Router<AppState> {
         .route(
             "/members/{id}",
             patch(members::update).delete(members::delete),
+        )
+        // recipe categories
+        .route(
+            "/categories",
+            get(categories::list).post(categories::create),
+        )
+        .route(
+            "/categories/{id}",
+            patch(categories::update).delete(categories::delete),
         )
         // recipes
         .route("/recipes", get(recipes::list).post(recipes::create))

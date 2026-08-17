@@ -1,5 +1,6 @@
 use axum::Json;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
+use serde::Deserialize;
 use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
@@ -14,10 +15,12 @@ use crate::state::AppState;
 /// recipes) and this keeps the row-fanout assembly obvious.
 pub async fn load_all(db: &PgPool) -> AppResult<Vec<Recipe>> {
     let rows = sqlx::query_as::<_, RecipeRow>(
-        "select id, title, category, time_label, time_minutes, serves_label,
-                blurb, source, source_url, created_at
-           from recipes
-          order by created_at",
+        "select r.id, r.category_id, c.name as category, r.title, r.time_label,
+                r.time_minutes, r.serves_label, r.blurb, r.source, r.source_url,
+                r.created_at
+           from recipes r
+           join recipe_categories c on c.id = r.category_id
+          order by r.created_at",
     )
     .fetch_all(db)
     .await?;
@@ -64,16 +67,41 @@ pub async fn list(State(state): State<AppState>) -> AppResult<Json<Vec<Recipe>>>
     Ok(Json(load_all(&state.db).await?))
 }
 
+/// Asking for the recipe as it is being cooked tonight rather than as written.
+#[derive(Debug, Deserialize)]
+pub struct BatchQuery {
+    /// Multiply every quantity by this. Absent or 1 returns the recipe verbatim.
+    #[serde(default)]
+    pub batch: Option<i16>,
+}
+
 pub async fn get_one(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Query(query): Query<BatchQuery>,
 ) -> AppResult<Json<Recipe>> {
-    load_all(&state.db)
+    let mut recipe = load_all(&state.db)
         .await?
         .into_iter()
         .find(|r| r.row.id == id)
-        .map(Json)
-        .ok_or(AppError::NotFound("That recipe is not in the library."))
+        .ok_or(AppError::NotFound("That recipe is not in the library."))?;
+
+    // Scaled here rather than in the browser. The quantity parser is shared
+    // with the importers and the shopping merge, and a second implementation in
+    // TypeScript is how the amount on the recipe and the amount on the list
+    // drift apart — which is exactly the pair that has to agree.
+    if let Some(batch) = query.batch.filter(|b| *b > 1) {
+        for ingredient in &mut recipe.ingredients {
+            ingredient.qty = crate::recipe_import::scale_quantity(&ingredient.qty, batch);
+        }
+    }
+
+    Ok(Json(recipe))
+}
+
+/// `get_one` for callers that only ever want the recipe as written.
+async fn get_plain(state: AppState, id: Uuid) -> AppResult<Json<Recipe>> {
+    get_one(State(state), Path(id), Query(BatchQuery { batch: None })).await
 }
 
 /// Write a draft to the library. Shared by the manual form and both importers.
@@ -87,14 +115,16 @@ pub async fn insert_draft(
         return Err(AppError::BadRequest("A recipe needs a name.".into()));
     }
 
+    let category_id = super::categories::resolve(tx, &draft.category).await?;
+
     let id: Uuid = sqlx::query_scalar(
         "insert into recipes
-            (title, category, time_label, time_minutes, serves_label, blurb, source, source_url)
+            (title, category_id, time_label, time_minutes, serves_label, blurb, source, source_url)
          values ($1, $2, $3, $4, $5, $6, $7, $8)
          returning id",
     )
     .bind(title)
-    .bind(draft.category)
+    .bind(category_id)
     .bind(draft.time_label.trim())
     .bind(draft.time_minutes)
     .bind(draft.serves_label.trim())
@@ -151,18 +181,7 @@ pub async fn create(
     State(state): State<AppState>,
     Json(input): Json<CreateRecipe>,
 ) -> AppResult<Json<Recipe>> {
-    let mut draft = input.draft;
-
-    if let Some(lines) = input.ingredient_lines {
-        if draft.ingredients.is_empty() {
-            draft.ingredients = lines
-                .iter()
-                .map(|line| line.trim())
-                .filter(|line| !line.is_empty())
-                .map(crate::recipe_import::split_quantity)
-                .collect();
-        }
-    }
+    let draft = input.draft.with_lines(input.ingredient_lines);
 
     let mut tx = state.db.begin().await?;
     let id = insert_draft(&mut tx, &draft, input.source.unwrap_or(RecipeSource::Manual)).await?;
@@ -171,25 +190,28 @@ pub async fn create(
     state.bus.publish(Topic::Recipes);
     // A new recipe cannot change the list yet, but the phone's library sheet
     // and the hub's assign panel both read from the same payload.
-    get_one(State(state), Path(id)).await
+    get_plain(state, id).await
 }
 
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(draft): Json<RecipeDraft>,
+    Json(input): Json<CreateRecipe>,
 ) -> AppResult<Json<Recipe>> {
+    let draft = input.draft.with_lines(input.ingredient_lines);
     let mut tx = state.db.begin().await?;
+
+    let category_id = super::categories::resolve(&mut tx, &draft.category).await?;
 
     let updated = sqlx::query(
         "update recipes
-            set title = $2, category = $3, time_label = $4, time_minutes = $5,
+            set title = $2, category_id = $3, time_label = $4, time_minutes = $5,
                 serves_label = $6, blurb = $7
           where id = $1",
     )
     .bind(id)
     .bind(draft.title.trim())
-    .bind(draft.category)
+    .bind(category_id)
     .bind(draft.time_label.trim())
     .bind(draft.time_minutes)
     .bind(draft.serves_label.trim())
@@ -245,7 +267,7 @@ pub async fn update(
     // Editing ingredients changes the derived shopping list for any week this
     // recipe is planned in, so both topics move.
     state.bus.publish_all(&[Topic::Recipes, Topic::Shopping]);
-    get_one(State(state), Path(id)).await
+    get_plain(state, id).await
 }
 
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> AppResult<Json<()>> {

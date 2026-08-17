@@ -4,7 +4,7 @@ import { Check, Plus } from 'lucide-react';
 import { api } from '../../api/client';
 import { useStore } from '../../api/store';
 import type { ListItem, ShoppingList } from '../../api/types';
-import { isoDate, weekRange } from '../../lib/week';
+import { addDays, isoDate, weekRange } from '../../lib/week';
 import { CloseButton } from './AssignPanel';
 import { HubKeyboard } from './HubKeyboard';
 
@@ -45,8 +45,22 @@ export function ShoppingSheet({ onClose }: { onClose: () => void }) {
     };
   }, [weekKey]);
 
+  // Follow the live payload, the way the phone's list already does. Planning a
+  // dinner sends the week back to review, and that can happen on the other
+  // surface while this sheet is open on the wall — without this, the display
+  // would keep showing a committed list for a week that is no longer approved.
+  useEffect(() => {
+    if (data?.shopping && data.shopping.week_start === weekKey) setList(data.shopping);
+  }, [data?.shopping, weekKey]);
+
+  // Only the week this list is for. The bootstrap payload carries seven weeks
+  // of plan so the meal strip can scroll, so counting all of it reported the
+  // whole month's dinners as if they were this week's shopping.
+  const weekEnd = isoDate(addDays(weekStart, 6));
   const plannedDinners = data
-    ? data.plan.filter((entry) => entry.kind === 'cook').length
+    ? data.plan.filter(
+        (entry) => entry.kind === 'cook' && entry.day >= weekKey && entry.day <= weekEnd,
+      ).length
     : 0;
 
   const setItem = async (key: string, change: { bought?: boolean; skipped?: boolean }) => {
@@ -427,7 +441,7 @@ export function ShoppingSheet({ onClose }: { onClose: () => void }) {
 
         {keyboardAisle && (
           <HubKeyboard
-            aisle={keyboardAisle}
+            hint={`Adding to ${keyboardAisle}`}
             onCancel={() => setKeyboardAisle(null)}
             onSubmit={(value) => addExtra(value, keyboardAisle)}
           />

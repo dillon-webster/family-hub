@@ -1,46 +1,163 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, History, Plus, ShoppingCart } from 'lucide-react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { CalendarCheck, History, Plus, ShoppingCart } from 'lucide-react';
 
 import { useStore } from '../../api/store';
-import { CATEGORY_FIELD, OUT_FIELD } from '../../design/category';
-import { addDays, dayNumber, dayShort, isSameDay, isoDate, weekDays, weekRange } from '../../lib/week';
+import { LEFTOVERS_FIELD, OUT_FIELD } from '../../design/category';
+import {
+  addDays,
+  dayNumber,
+  dayShort,
+  isSameDay,
+  isoDate,
+  mondayOf,
+  monthDay,
+  weekRange,
+} from '../../lib/week';
+import { mealKey } from '../../lib/meal';
 import { AssignPanel } from '../panels/AssignPanel';
 import { HistorySheet } from '../panels/HistorySheet';
+import { LunchStrip } from '../panels/LunchStrip';
 import { ShoppingSheet } from '../panels/ShoppingSheet';
 
 interface Props {
   assignDay: string | null;
   setAssignDay: (day: string | null) => void;
-  onOpenRecipe: (id: string) => void;
+  onOpenRecipe: (id: string, batch?: number) => void;
 }
 
+/**
+ * The plan is a strip you scroll, not a week you page.
+ *
+ * Paging with arrows made the boundary between Sunday and Monday into a wall:
+ * planning Sunday and the Monday after it — which is one decision a household
+ * makes in one breath — took two taps and a reorientation. A continuous strip
+ * has no boundary, so the only thing left to solve is knowing where you are,
+ * which is what the Today button and the live week label are for.
+ */
+
+/** One day column, and the gap between two. Needed as numbers because the
+ *  scroll maths converts pixels back into which day is on the left. */
+const DAY_WIDTH = 188;
+const DAY_GAP = 12;
+const STRIDE = DAY_WIDTH + DAY_GAP;
+
+/** How far the strip runs either side of its anchor. Matches the plan window
+ *  the bootstrap request asks for — a strip wider than the data would scroll
+ *  into days that render as empty rather than unknown. */
+const DAYS_BEFORE = 21;
+const DAYS_AFTER = 27;
+
 export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
-  const { data, weekStart, setWeekStart, entryFor, recipeFor } = useStore();
+  const { data, weekStart, setWeekStart, entryFor, recipeFor, categoryField } = useStore();
   const [listOpen, setListOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+
+  const scroller = useRef<HTMLDivElement>(null);
+
+  /**
+   * The strip's origin, deliberately independent of `weekStart`.
+   *
+   * Scrolling updates `weekStart` so the shopping list follows what you are
+   * looking at, and `weekStart` drives a refetch. If the day range were derived
+   * from it too, every scroll would rebuild the strip under your finger and
+   * throw away the scroll position. The anchor only moves when Today is pressed.
+   */
+  const [anchor, setAnchor] = useState(() => mondayOf(new Date()));
+
+  /** The leftmost day on screen, which is what the header describes. */
+  const [firstVisible, setFirstVisible] = useState(() => mondayOf(new Date()));
+
+  const days = Array.from({ length: DAYS_BEFORE + DAYS_AFTER + 1 }, (_, index) =>
+    addDays(anchor, index - DAYS_BEFORE),
+  );
+
+  const today = new Date();
+
+  const scrollTo = useCallback(
+    (day: Date, behavior: ScrollBehavior) => {
+      const node = scroller.current;
+      if (!node) return;
+      const index = Math.round(
+        (day.getTime() - addDays(anchor, -DAYS_BEFORE).getTime()) / 86_400_000,
+      );
+      node.scrollTo({ left: Math.max(0, index * STRIDE), behavior });
+    },
+    [anchor],
+  );
+
+  // Open on today rather than on Monday: the display is read standing in the
+  // kitchen on a Thursday, and the useful question is what happens tonight.
+  useLayoutEffect(() => {
+    scrollTo(new Date(), 'auto');
+    setFirstVisible(new Date());
+  }, [scrollTo]);
+
+  const onScroll = () => {
+    const node = scroller.current;
+    if (!node) return;
+    const index = Math.round(node.scrollLeft / STRIDE);
+    const day = addDays(anchor, index - DAYS_BEFORE);
+    setFirstVisible(day);
+
+    // Follow the week into the store so the shopping list, which is built for
+    // one week, is the week the plan is showing. Only on an actual change:
+    // every scroll frame would otherwise refetch the bootstrap payload.
+    const monday = mondayOf(day);
+    if (isoDate(monday) !== isoDate(weekStart)) setWeekStart(monday);
+  };
+
+  const goToToday = () => {
+    const now = new Date();
+    // Re-anchor first when today has drifted off the end of the strip, which
+    // happens to a display left running for a month.
+    const offset = Math.round((now.getTime() - anchor.getTime()) / 86_400_000);
+    if (offset < -DAYS_BEFORE || offset > DAYS_AFTER) setAnchor(mondayOf(now));
+    setWeekStart(mondayOf(now));
+    scrollTo(now, 'smooth');
+    setFirstVisible(now);
+  };
+
+  useEffect(() => {
+    if (!data) return;
+    // A recipe opened and closed can leave the strip scrolled somewhere the
+    // header no longer describes; recomputing on data changes is cheap.
+    onScroll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
   if (!data) return null;
 
-  const days = weekDays(weekStart);
-  const today = new Date();
-  const plannedCount = data.plan.filter((entry) =>
-    days.some((day) => isoDate(day) === entry.day),
+  // The seven days from wherever the strip is parked, which is what the count
+  // in the header is counting.
+  const visibleWeek = Array.from({ length: 7 }, (_, index) => addDays(firstVisible, index));
+  const plannedCount = data.plan.filter(
+    (entry) =>
+      entry.slot === 'dinner' && visibleWeek.some((day) => isoDate(day) === entry.day),
   ).length;
 
+  const showingThisWeek = isoDate(mondayOf(firstVisible)) === isoDate(mondayOf(today));
+
   return (
-    <div style={{ padding: '30px 34px', height: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <header style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
+    <div style={{ padding: '30px 0 24px', height: '100%', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          gap: 20,
+          padding: '0 34px',
+        }}
+      >
         <div style={{ minWidth: 0 }}>
           <h1 className="display-title" style={{ fontSize: 36, color: '#FAF3E9', margin: 0 }}>
             Meal plan
           </h1>
           <div style={{ fontSize: 16, color: '#8E8073', marginTop: 4, whiteSpace: 'nowrap' }}>
-            {weekRange(weekStart)} · {plannedCount} of 7 dinners planned
+            {weekRange(mondayOf(firstVisible))} · {plannedCount} of 7 dinners planned
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flex: '0 0 auto' }}>
-          {/* Secondary to the shopping list: outlined rather than terracotta,
-              because looking back is a browse and the list is the errand. */}
           <button
             type="button"
             className="pressable"
@@ -91,58 +208,52 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
 
           <div style={{ width: 1, height: 32, background: 'rgba(252,247,239,0.14)', margin: '0 4px' }} />
 
+          {/* The only navigation control left. It earns its place by being the
+              one thing scrolling cannot do for you: get back. */}
           <button
             type="button"
             className="pressable"
-            aria-label="Previous week"
-            onClick={() => setWeekStart(addDays(weekStart, -7))}
+            onClick={goToToday}
+            aria-label="Scroll back to today"
             style={
               {
-                width: 52,
                 height: 52,
-                borderRadius: 14,
-                border: '1px solid rgba(252,247,239,0.18)',
+                padding: '0 20px',
+                borderRadius: 999,
+                border: `1px solid ${showingThisWeek ? 'rgba(252,247,239,0.18)' : 'rgba(200,85,61,0.55)'}`,
+                color: showingThisWeek ? '#BFB0A0' : '#E37A57',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                color: '#BFB0A0',
+                gap: 9,
+                fontSize: 16,
+                fontWeight: 600,
+                transition: 'color .2s, border-color .2s',
                 '--bg-press': 'rgba(252,247,239,0.08)',
               } as React.CSSProperties
             }
           >
-            <ChevronLeft size={20} />
-          </button>
-          <button
-            type="button"
-            className="pressable"
-            aria-label="Next week"
-            onClick={() => setWeekStart(addDays(weekStart, 7))}
-            style={
-              {
-                width: 52,
-                height: 52,
-                borderRadius: 14,
-                border: '1px solid rgba(252,247,239,0.18)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#BFB0A0',
-                '--bg-press': 'rgba(252,247,239,0.08)',
-              } as React.CSSProperties
-            }
-          >
-            <ChevronRight size={20} />
+            <CalendarCheck size={20} strokeWidth={2} />
+            Today
           </button>
         </div>
       </header>
 
       <div
+        ref={scroller}
+        onScroll={onScroll}
+        className="scroll-none"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-          gap: 12,
           flex: 1,
           minHeight: 0,
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          display: 'flex',
+          gap: DAY_GAP,
+          // Snapping is what keeps a flick from parking half a Tuesday against
+          // the edge of the screen.
+          scrollSnapType: 'x mandatory',
+          padding: '0 34px',
+          scrollPaddingLeft: 34,
         }}
       >
         {days.map((day) => {
@@ -150,11 +261,29 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
           const entry = entryFor(day);
           const recipe = recipeFor(day);
           const out = entry?.kind === 'out';
+          const over = entry?.kind === 'leftovers';
           const isToday = isSameDay(day, today);
           const isTarget = assignDay === key;
+          const batch = entry?.batch ?? 1;
 
           return (
-            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 10, minHeight: 0 }}>
+            <div
+              key={key}
+              // The strip holds seven weeks of columns, so "the first empty
+              // night" is no longer a way to mean "tonight". This is how a
+              // specific day is addressed from outside — the e2e tests reach
+              // for today's column through it.
+              data-day={key}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+                minHeight: 0,
+                width: DAY_WIDTH,
+                flex: `0 0 ${DAY_WIDTH}px`,
+                scrollSnapAlign: 'start',
+              }}
+            >
               <div
                 style={{
                   textAlign: 'center',
@@ -170,7 +299,9 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
                   className="mono"
                   style={{ fontSize: 18, color: isToday ? '#E37A57' : '#8E8073', marginTop: 2 }}
                 >
-                  {dayNumber(day)}
+                  {/* The month appears on the 1st, so a strip you have scrolled
+                      a long way never leaves you guessing which month it is. */}
+                  {day.getDate() === 1 ? monthDay(day) : dayNumber(day)}
                 </div>
               </div>
 
@@ -189,9 +320,9 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
-                  background: recipe || out ? '#2A2420' : 'rgba(252,247,239,0.02)',
+                  background: recipe || out || over ? '#2A2420' : 'rgba(252,247,239,0.02)',
                   border:
-                    recipe || out
+                    recipe || out || over
                       ? '1px solid rgba(252,247,239,0.09)'
                       : isTarget
                         ? '2px dashed #C8553D'
@@ -202,11 +333,13 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
                   <>
                     <div
                       style={{
-                        height: 150,
-                        flex: '0 0 150px',
-                        background: CATEGORY_FIELD[recipe.category],
+                        height: 138,
+                        flex: '0 0 138px',
+                        background: categoryField(recipe.category),
                         display: 'flex',
                         alignItems: 'flex-end',
+                        justifyContent: 'space-between',
+                        gap: 8,
                         padding: 12,
                       }}
                     >
@@ -221,6 +354,7 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
                       >
                         {recipe.category}
                       </span>
+                      {batch > 1 && <BatchBadge batch={batch} />}
                     </div>
                     <div
                       style={{
@@ -232,7 +366,7 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
                         textAlign: 'left',
                       }}
                     >
-                      <div className="serif" style={{ fontSize: 22, lineHeight: 1.18, color: '#FAF3E9' }}>
+                      <div className="serif" style={{ fontSize: 21, lineHeight: 1.18, color: '#FAF3E9' }}>
                         {recipe.title}
                       </div>
                       <div className="mono" style={{ fontSize: 13, color: '#8E8073' }}>
@@ -242,13 +376,13 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
                   </>
                 )}
 
-                {out && (
+                {(out || over) && (
                   <>
                     <div
                       style={{
-                        height: 150,
-                        flex: '0 0 150px',
-                        background: OUT_FIELD,
+                        height: 138,
+                        flex: '0 0 138px',
+                        background: over ? LEFTOVERS_FIELD : OUT_FIELD,
                         display: 'flex',
                         alignItems: 'flex-end',
                         padding: 12,
@@ -263,7 +397,7 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
                           color: 'rgba(255,248,242,0.85)',
                         }}
                       >
-                        Eating out
+                        {over ? 'Leftovers' : 'Eating out'}
                       </span>
                     </div>
                     <div
@@ -276,8 +410,8 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
                         textAlign: 'left',
                       }}
                     >
-                      <div className="serif" style={{ fontSize: 22, lineHeight: 1.18, color: '#FAF3E9' }}>
-                        {entry?.out_place ?? 'Eating out'}
+                      <div className="serif" style={{ fontSize: 21, lineHeight: 1.18, color: '#FAF3E9' }}>
+                        {over ? 'Leftovers' : (entry?.out_place ?? 'Eating out')}
                       </div>
                       <div className="mono" style={{ fontSize: 13, color: '#8E8073' }}>
                         no cooking
@@ -286,7 +420,7 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
                   </>
                 )}
 
-                {!recipe && !out && (
+                {!recipe && !out && !over && (
                   <div
                     style={{
                       flex: 1,
@@ -333,6 +467,8 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
         })}
       </div>
 
+      <LunchStrip week={visibleWeek} onAssign={(day) => setAssignDay(mealKey(day, 'lunch'))} />
+
       {assignDay && (
         <AssignPanel
           day={assignDay}
@@ -345,5 +481,25 @@ export function MealsScreen({ assignDay, setAssignDay, onOpenRecipe }: Props) {
         <HistorySheet onClose={() => setHistoryOpen(false)} onOpenRecipe={onOpenRecipe} />
       )}
     </div>
+  );
+}
+
+/** "×2" on a doubled night. Mono, because it is a number. */
+export function BatchBadge({ batch, dark = false }: { batch: number; dark?: boolean }) {
+  return (
+    <span
+      className="mono"
+      style={{
+        fontSize: 12,
+        lineHeight: 1,
+        padding: '5px 8px',
+        borderRadius: 8,
+        flex: '0 0 auto',
+        background: dark ? 'rgba(200,85,61,0.18)' : 'rgba(20,17,15,0.34)',
+        color: dark ? '#E37A57' : '#FFF8F2',
+      }}
+    >
+      ×{batch}
+    </span>
   );
 }

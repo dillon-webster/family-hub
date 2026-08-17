@@ -2,12 +2,13 @@ import type {
   Bootstrap,
   CalendarEvent,
   CalendarFeed,
-  Category,
   ImportPreview,
+  MealSlot,
   Member,
   OutSpot,
   PlanEntry,
   Recipe,
+  RecipeCategory,
   RecipeDraft,
   ShoppingList,
   Task,
@@ -50,20 +51,41 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 const json = (body: unknown): RequestInit => ({ body: JSON.stringify(body) });
 
+/** Dinner is the default on the server, so it is left off the wire entirely. */
+const slotQuery = (slot?: MealSlot) => (slot && slot !== 'dinner' ? `?slot=${slot}` : '');
+
 export const api = {
   bootstrap: (weekStart: string) =>
     request<Bootstrap>(`/bootstrap?week_start=${weekStart}`),
 
   // ---- week plan ----------------------------------------------------------
-  /** Assign a recipe to a day. */
-  cook: (day: string, recipeId: string) =>
-    request<unknown>(`/plan/${day}`, { method: 'PUT', ...json({ recipe_id: recipeId }) }),
+  /**
+   * Assign a recipe to a meal. `batch` is how many times over it is being made
+   * — the server multiplies the ingredients before they reach the list, so
+   * nothing downstream has to know about doubling.
+   */
+  cook: (day: string, recipeId: string, options?: { batch?: number; slot?: MealSlot }) =>
+    request<unknown>(`/plan/${day}${slotQuery(options?.slot)}`, {
+      method: 'PUT',
+      ...json({ recipe_id: recipeId, batch: options?.batch ?? 1 }),
+    }),
 
-  /** Mark a day as eating out, optionally at a named spot. */
-  eatOut: (day: string, place?: string) =>
-    request<unknown>(`/plan/${day}`, { method: 'PUT', ...json({ place: place ?? null }) }),
+  /** Mark a meal as eating out, optionally at a named spot. */
+  eatOut: (day: string, place?: string, slot?: MealSlot) =>
+    request<unknown>(`/plan/${day}${slotQuery(slot)}`, {
+      method: 'PUT',
+      ...json({ place: place ?? null }),
+    }),
 
-  clearDay: (day: string) => request<unknown>(`/plan/${day}`, { method: 'DELETE' }),
+  /** Mark a night as leftovers: planned, and nothing added to the list. */
+  leftovers: (day: string, slot?: MealSlot) =>
+    request<unknown>(`/plan/${day}${slotQuery(slot)}`, {
+      method: 'PUT',
+      ...json({ leftovers: true }),
+    }),
+
+  clearDay: (day: string, slot?: MealSlot) =>
+    request<unknown>(`/plan/${day}${slotQuery(slot)}`, { method: 'DELETE' }),
 
   /**
    * A span of plan entries, for looking back over past weeks. The server caps
@@ -108,6 +130,20 @@ export const api = {
     added_by?: string | null;
   }) => request<ShoppingList>('/shopping/extras', { method: 'POST', ...json(input) }),
 
+  // ---- categories ---------------------------------------------------------
+  categories: () => request<RecipeCategory[]>('/categories'),
+
+  addCategory: (input: { name: string; color_from: string; color_to: string }) =>
+    request<RecipeCategory>('/categories', { method: 'POST', ...json(input) }),
+
+  updateCategory: (
+    id: string,
+    patch: { name?: string; color_from?: string; color_to?: string },
+  ) => request<RecipeCategory>(`/categories/${id}`, { method: 'PATCH', ...json(patch) }),
+
+  deleteCategory: (id: string) =>
+    request<unknown>(`/categories/${id}`, { method: 'DELETE' }),
+
   // ---- recipes ------------------------------------------------------------
   recipes: () => request<Recipe[]>('/recipes'),
 
@@ -116,6 +152,12 @@ export const api = {
 
   updateRecipe: (id: string, draft: RecipeDraft) =>
     request<Recipe>(`/recipes/${id}`, { method: 'PUT', ...json(draft) }),
+
+  /** The recipe as it is being cooked tonight: every quantity multiplied by
+   *  `batch`. Scaled on the server so the amounts here and the amounts on the
+   *  shopping list come from one implementation of the quantity parser. */
+  recipeAtBatch: (id: string, batch: number) =>
+    request<Recipe>(`/recipes/${id}?batch=${batch}`),
 
   deleteRecipe: (id: string) => request<unknown>(`/recipes/${id}`, { method: 'DELETE' }),
 
@@ -180,5 +222,3 @@ export const api = {
   deleteOutSpot: (id: string) =>
     request<unknown>(`/out-spots/${id}`, { method: 'DELETE' }),
 };
-
-export const CATEGORIES: Category[] = ['Dinner', 'Breakfast', 'Vegetarian', 'Dessert'];
